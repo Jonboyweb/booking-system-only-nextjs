@@ -128,8 +128,29 @@ export async function POST(request: Request) {
       });
     }
     
+    // Create booking
+    const booking = await prisma.booking.create({
+      data: {
+        bookingReference: generateBookingRef(),
+        tableId: body.tableId,
+        customerId: customer.id,
+        bookingDate: new Date(body.date),
+        bookingTime: body.time,
+        partySize: body.partySize,
+        status: 'PENDING',
+        depositAmount: 50,
+        depositPaid: false,
+        drinkPackageId: body.drinkPackageId || null,
+        specialRequests: body.specialRequests || null
+      },
+      include: {
+        table: true,
+        customer: true,
+        drinkPackage: true
+      }
+    });
+    
     // Create custom order if bottles selected
-    let customOrderId = null;
     if ((body.selectedSpirits && body.selectedSpirits.length > 0) || 
         (body.selectedChampagnes && body.selectedChampagnes.length > 0)) {
       
@@ -144,51 +165,49 @@ export async function POST(request: Request) {
         const spirits = await prisma.spirit.findMany({
           where: { id: { in: body.selectedSpirits } }
         });
-        items.spirits = spirits;
-        totalPrice += spirits.reduce((sum, s) => sum + s.price, 0);
+        
+        for (const spirit of spirits) {
+          await prisma.bookingSpirit.create({
+            data: {
+              bookingId: booking.id,
+              spiritId: spirit.id,
+              quantity: 1,
+              price: spirit.price
+            }
+          });
+          items.spirits.push(spirit);
+          totalPrice += Number(spirit.price);
+        }
       }
       
       if (body.selectedChampagnes && body.selectedChampagnes.length > 0) {
         const champagnes = await prisma.champagne.findMany({
           where: { id: { in: body.selectedChampagnes } }
         });
-        items.champagnes = champagnes;
-        totalPrice += champagnes.reduce((sum, c) => sum + c.price, 0);
+        
+        for (const champagne of champagnes) {
+          await prisma.bookingChampagne.create({
+            data: {
+              bookingId: booking.id,
+              champagneId: champagne.id,
+              quantity: 1,
+              price: champagne.price
+            }
+          });
+          items.champagnes.push(champagne);
+          totalPrice += Number(champagne.price);
+        }
       }
       
-      const customOrder = await prisma.customOrder.create({
+      // Create custom order record
+      await prisma.customOrder.create({
         data: {
+          bookingId: booking.id,
           items,
           totalPrice
         }
       });
-      
-      customOrderId = customOrder.id;
     }
-    
-    // Create booking
-    const booking = await prisma.booking.create({
-      data: {
-        bookingReference: generateBookingRef(),
-        tableId: body.tableId,
-        customerId: customer.id,
-        bookingDate: new Date(body.date),
-        bookingTime: body.time,
-        partySize: body.partySize,
-        status: 'PENDING',
-        depositAmount: 50,
-        depositPaid: false,
-        drinkPackageId: body.drinkPackageId || null,
-        customOrderId,
-        specialRequests: body.specialRequests || null
-      },
-      include: {
-        table: true,
-        customer: true,
-        drinkPackage: true,
-        customOrder: true
-      }
-    });
     
     return NextResponse.json(booking, { status: 201 });
   } catch (error) {
@@ -203,8 +222,40 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
     const reference = searchParams.get('reference');
     const email = searchParams.get('email');
+    
+    if (id) {
+      const booking = await prisma.booking.findUnique({
+        where: { id },
+        include: {
+          table: true,
+          customer: true,
+          drinkPackage: true,
+          customOrder: true,
+          spirits: {
+            include: {
+              spirit: true
+            }
+          },
+          champagnes: {
+            include: {
+              champagne: true
+            }
+          }
+        }
+      });
+      
+      if (!booking) {
+        return NextResponse.json(
+          { error: 'Booking not found' },
+          { status: 404 }
+        );
+      }
+      
+      return NextResponse.json(booking);
+    }
     
     if (reference) {
       const booking = await prisma.booking.findUnique({
@@ -213,7 +264,17 @@ export async function GET(request: Request) {
           table: true,
           customer: true,
           drinkPackage: true,
-          customOrder: true
+          customOrder: true,
+          spirits: {
+            include: {
+              spirit: true
+            }
+          },
+          champagnes: {
+            include: {
+              champagne: true
+            }
+          }
         }
       });
       

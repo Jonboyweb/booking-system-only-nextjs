@@ -73,6 +73,10 @@ model Booking {
   depositPaid       Boolean        @default(false)
   stripePaymentId   String?
   stripeIntentId    String?
+  paymentDate       DateTime?
+  depositRefunded   Boolean        @default(false)
+  refundDate        DateTime?
+  refundAmount      Int?
   drinkPackageId    String?
   specialRequests   String?
   internalNotes     String?
@@ -83,6 +87,9 @@ model Booking {
   customer          Customer       @relation(fields: [customerId], references: [id])
   drinkPackage      DrinkPackage?  @relation(fields: [drinkPackageId], references: [id])
   customOrder       CustomOrder?
+  spirits           BookingSpirit[]
+  champagnes        BookingChampagne[]
+  paymentLogs       PaymentLog[]
   
   @@unique([tableId, bookingDate, bookingTime])
   @@index([bookingDate])
@@ -130,6 +137,8 @@ model Spirit {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   
+  bookingSpirits BookingSpirit[]
+  
   @@unique([category, brand, name])
   @@index([category])
   @@map("spirits")
@@ -144,6 +153,8 @@ model Champagne {
   sortOrder   Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  
+  bookingChampagnes BookingChampagne[]
   
   @@unique([brand, name])
   @@map("champagnes")
@@ -162,4 +173,55 @@ model AdminUser {
   updatedAt    DateTime  @updatedAt
   
   @@map("admin_users")
+}
+
+// Junction table for booking spirits
+model BookingSpirit {
+  id          String    @id @default(uuid())
+  bookingId   String
+  spiritId    String
+  quantity    Int       @default(1)
+  price       Decimal
+  createdAt   DateTime  @default(now())
+  
+  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  spirit      Spirit    @relation(fields: [spiritId], references: [id])
+  
+  @@unique([bookingId, spiritId])
+  @@map("booking_spirits")
+}
+
+// Junction table for booking champagnes
+model BookingChampagne {
+  id          String    @id @default(uuid())
+  bookingId   String
+  champagneId String
+  quantity    Int       @default(1)
+  price       Decimal
+  createdAt   DateTime  @default(now())
+  
+  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  champagne   Champagne @relation(fields: [champagneId], references: [id])
+  
+  @@unique([bookingId, champagneId])
+  @@map("booking_champagnes")
+}
+
+// Payment logs for tracking all payment events
+model PaymentLog {
+  id               String    @id @default(uuid())
+  bookingId        String
+  stripePaymentId  String
+  amount           Int       // Amount in pence
+  currency         String
+  status           String    // SUCCEEDED, FAILED, REFUNDED
+  errorMessage     String?
+  metadata         Json?
+  createdAt        DateTime  @default(now())
+  
+  booking          Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  
+  @@index([bookingId])
+  @@index([stripePaymentId])
+  @@map("payment_logs")
 }

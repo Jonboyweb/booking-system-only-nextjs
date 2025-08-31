@@ -123,9 +123,40 @@ export default function BookingFlow() {
   };
   
   const handlePayment = async () => {
-    // This would integrate with Stripe
-    console.log('Processing payment...', formData);
-    // TODO: Implement Stripe payment
+    try {
+      // Create the booking
+      const bookingResponse = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          tableId: formData.tableId,
+          date: formData.date,
+          time: formData.time,
+          partySize: formData.partySize,
+          customer: formData.customer,
+          drinkPackageId: formData.drinkPackageId,
+          selectedSpirits: formData.selectedSpirits,
+          selectedChampagnes: formData.selectedChampagnes,
+          specialRequests: formData.specialRequests
+        })
+      });
+
+      if (!bookingResponse.ok) {
+        const error = await bookingResponse.json();
+        alert(error.error || 'Failed to create booking');
+        return;
+      }
+
+      const booking = await bookingResponse.json();
+      
+      // Redirect to payment page
+      window.location.href = `/booking/payment?bookingId=${booking.id}`;
+    } catch (error) {
+      console.error('Booking failed:', error);
+      alert('Failed to create booking. Please try again.');
+    }
   };
   
   return (

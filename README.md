@@ -149,7 +149,7 @@ booking-system-only-nextjs/
   
 - **Phase 2: Database & Data Models** 
   - PostgreSQL with Docker setup
-  - Prisma ORM with 9 models
+  - Prisma ORM with 11 models (including PaymentLog)
   - 16 tables, 8 drink packages, 31 spirits seeded
   - API endpoints verified
 
@@ -166,11 +166,14 @@ booking-system-only-nextjs/
   - Real-time SSE availability updates
   - Comprehensive API testing suite
 
-### 🚧 Current Phase
-- **Phase 5: Payment Integration**
-  - Stripe setup for £50 deposits
-  - Payment intent creation
-  - Webhook handling
+- **Phase 5: Payment Integration** ✅ COMPLETED
+  - Stripe SDK integrated (server & client)
+  - £50 deposit payment with Payment Intents API
+  - Secure payment form with Stripe Elements
+  - Webhook endpoint for payment confirmation
+  - PaymentLog model for audit trail
+  - Refund logic with 48-hour policy
+  - Payment confirmation page with booking details
 
 ### ⏳ Upcoming Phases
 - Phase 6: Email & Notifications
@@ -178,7 +181,7 @@ booking-system-only-nextjs/
 - Phase 8: Mobile Optimization & Testing
 - Phase 9: Final Polish & Deployment
 
-**Overall Progress**: 44% Complete (4 of 9 phases)
+**Overall Progress**: 56% Complete (5 of 9 phases)
 
 ## 📄 License
 
