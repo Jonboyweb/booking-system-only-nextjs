@@ -60,12 +60,21 @@ Visit http://localhost:3000 to see the application.
 
 ## 📊 Database Schema
 
-The system includes:
-- 16 tables across 2 floors (Upstairs & Downstairs)
-- Customer management
-- Booking system with status tracking
-- Drink packages and custom orders
-- Admin user management
+### Venue Layout
+- **16 Tables Total**:
+  - 10 Upstairs tables (including 2 VIP booths)
+  - 6 Downstairs tables
+  - Tables 15 & 16 can combine for groups of 7-12
+
+### Core Models
+- **Tables**: Venue layout with capacity, features, VIP status
+- **Customers**: Guest profiles with contact info and preferences
+- **Bookings**: Reservations with status tracking and payment info
+- **DrinkPackages**: 8 pre-configured packages (£40-£580)
+- **Spirits**: 31 options across Vodka, Rum, Gin, Cognac, Whiskey, Tequila
+- **Champagnes**: 8 premium selections (£85-£250)
+- **CustomOrders**: Flexible bottle selection system
+- **AdminUsers**: Staff access with role-based permissions
 
 ## 🎨 Design Theme
 
@@ -130,17 +139,34 @@ booking-system-only-nextjs/
 └── types/             # TypeScript definitions
 ```
 
-## 🚧 Current Status
+## 🚧 Development Progress
 
-- ✅ Phase 1: Project Setup & Architecture
-- ✅ Phase 2: Database & Data Models
-- 🚧 Phase 3: Core Booking Flow Frontend
-- ⏳ Phase 4: Backend API Development
-- ⏳ Phase 5: Payment Integration
-- ⏳ Phase 6: Email & Notifications
-- ⏳ Phase 7: Admin Dashboard
-- ⏳ Phase 8: Mobile Optimization & Testing
-- ⏳ Phase 9: Final Polish & Deployment
+### ✅ Completed Phases
+- **Phase 1: Project Setup & Architecture**
+  - Next.js 15 with TypeScript configured
+  - Tailwind CSS with prohibition theme
+  - Project structure established
+  
+- **Phase 2: Database & Data Models** 
+  - PostgreSQL with Docker setup
+  - Prisma ORM with 9 models
+  - 16 tables, 8 drink packages, 31 spirits seeded
+  - API endpoints verified
+
+### 🚧 Current Phase
+- **Phase 3: Core Booking Flow Frontend**
+  - Interactive floor plan components
+  - Multi-step booking form
+
+### ⏳ Upcoming Phases
+- Phase 4: Backend API Development
+- Phase 5: Payment Integration
+- Phase 6: Email & Notifications
+- Phase 7: Admin Dashboard
+- Phase 8: Mobile Optimization & Testing
+- Phase 9: Final Polish & Deployment
+
+**Overall Progress**: 22% Complete (2 of 9 phases)
 
 ## 📄 License
 
