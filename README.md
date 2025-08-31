@@ -159,20 +159,26 @@ booking-system-only-nextjs/
   - Full prohibition theme with Art Deco design
   - API routes for all booking operations
 
+- **Phase 4: Backend API Development** ✅
+  - 31-day advance booking limit enforced
+  - Table capacity and conflict validation
+  - Dynamic table combinations (15 & 16)
+  - Real-time SSE availability updates
+  - Comprehensive API testing suite
+
 ### 🚧 Current Phase
-- **Phase 4: Backend API Development**
-  - Business logic implementation
-  - Booking conflict prevention
-  - Real-time updates
+- **Phase 5: Payment Integration**
+  - Stripe setup for £50 deposits
+  - Payment intent creation
+  - Webhook handling
 
 ### ⏳ Upcoming Phases
-- Phase 5: Payment Integration
 - Phase 6: Email & Notifications
 - Phase 7: Admin Dashboard
 - Phase 8: Mobile Optimization & Testing
 - Phase 9: Final Polish & Deployment
 
-**Overall Progress**: 33% Complete (3 of 9 phases)
+**Overall Progress**: 44% Complete (4 of 9 phases)
 
 ## 📄 License
 

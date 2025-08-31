@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { 
+  validateBooking, 
+  isDateWithinBookingWindow,
+  isValidTableCapacity 
+} from '@/lib/booking-validation';
 
 // Generate booking reference
 function generateBookingRef(): string {
@@ -23,22 +28,85 @@ export async function POST(request: Request) {
       );
     }
     
-    // Check if table is available
-    const existingBooking = await prisma.booking.findFirst({
+    // Validate booking date is within 31-day window
+    const bookingDate = new Date(body.date);
+    if (!isDateWithinBookingWindow(bookingDate)) {
+      return NextResponse.json(
+        { error: 'Bookings can only be made up to 31 days in advance' },
+        { status: 400 }
+      );
+    }
+    
+    // Get table information
+    const table = await prisma.table.findUnique({
+      where: { id: body.tableId }
+    });
+    
+    if (!table) {
+      return NextResponse.json(
+        { error: 'Invalid table selected' },
+        { status: 400 }
+      );
+    }
+    
+    // Handle combined tables (15 & 16)
+    let combinedTable = null;
+    if (body.combinedTableId) {
+      combinedTable = await prisma.table.findUnique({
+        where: { id: body.combinedTableId }
+      });
+      
+      // Verify tables can be combined
+      if (!table.canCombineWith.includes(combinedTable?.tableNumber || 0)) {
+        return NextResponse.json(
+          { error: 'These tables cannot be combined' },
+          { status: 400 }
+        );
+      }
+    }
+    
+    // Validate table capacity
+    if (!isValidTableCapacity(table, body.partySize, combinedTable)) {
+      const minCapacity = combinedTable ? 7 : table.capacityMin;
+      const maxCapacity = combinedTable ? 
+        table.capacityMax + combinedTable.capacityMax : 
+        table.capacityMax;
+      
+      return NextResponse.json(
+        { error: `Party size must be between ${minCapacity} and ${maxCapacity} for this table` },
+        { status: 400 }
+      );
+    }
+    
+    // Get all bookings for validation
+    const existingBookings = await prisma.booking.findMany({
       where: {
-        tableId: body.tableId,
-        bookingDate: new Date(body.date),
+        bookingDate: bookingDate,
         bookingTime: body.time,
         status: {
           in: ['PENDING', 'CONFIRMED']
-        }
+        },
+        OR: [
+          { tableId: body.tableId },
+          ...(body.combinedTableId ? [{ tableId: body.combinedTableId }] : [])
+        ]
       }
     });
     
-    if (existingBooking) {
+    // Validate booking
+    const validation = validateBooking(
+      bookingDate,
+      body.time,
+      body.partySize,
+      table,
+      existingBookings,
+      combinedTable
+    );
+    
+    if (!validation.valid) {
       return NextResponse.json(
-        { error: 'Table is already booked for this time' },
-        { status: 409 }
+        { error: validation.errors.join('. ') },
+        { status: 400 }
       );
     }
     

@@ -6,6 +6,7 @@ import FloorPlan from './FloorPlan';
 import DrinkPackageSelector from './DrinkPackageSelector';
 import CustomerDetailsForm from './CustomerDetailsForm';
 import { BookingFormData, BookingStep, Table, DrinkPackage, Spirit, Champagne } from '@/types/booking';
+import { useAvailabilityStream } from '@/hooks/useAvailabilityStream';
 
 export default function BookingFlow() {
   const [currentStep, setCurrentStep] = useState<BookingStep>('date');
@@ -31,6 +32,9 @@ export default function BookingFlow() {
   const [selectedSpirits, setSelectedSpirits] = useState<string[]>([]);
   const [selectedChampagnes, setSelectedChampagnes] = useState<string[]>([]);
   const [selectedTable, setSelectedTable] = useState<Table | undefined>();
+  
+  // Use real-time availability stream
+  const { availability, isConnected } = useAvailabilityStream(formData.date);
   
   // Load initial data
   useEffect(() => {
@@ -182,6 +186,15 @@ export default function BookingFlow() {
         
         {currentStep === 'table' && (
           <div className="space-y-6">
+            {/* Real-time availability indicator */}
+            {formData.date && (
+              <div className="flex items-center justify-end gap-2 text-sm">
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
+                <span className="text-cream-dark">
+                  {isConnected ? 'Live availability' : 'Connecting...'}
+                </span>
+              </div>
+            )}
             <FloorPlan
               floor="UPSTAIRS"
               tables={tables}
