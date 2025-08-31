@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #1A1A1A;
+    --foreground: #F5F5DC;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-speakeasy-charcoal text-speakeasy-cream;
+  }
+}

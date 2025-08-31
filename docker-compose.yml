@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: backroom-postgres
+    environment:
+      POSTGRES_USER: backroom_user
+      POSTGRES_PASSWORD: backroom_secret_2024
+      POSTGRES_DB: backroom_bookings
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

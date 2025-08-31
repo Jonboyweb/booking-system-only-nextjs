@@ -1,0 +1,165 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Floor {
+  UPSTAIRS
+  DOWNSTAIRS
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model Table {
+  id            String    @id @default(uuid())
+  tableNumber   Int       @unique
+  floor         Floor
+  capacityMin   Int
+  capacityMax   Int
+  description   String
+  features      String[]
+  isVip         Boolean   @default(false)
+  canCombineWith Int[]    @default([])
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  bookings      Booking[]
+  
+  @@map("tables")
+}
+
+model Customer {
+  id               String    @id @default(uuid())
+  firstName        String
+  lastName         String
+  email            String    @unique
+  phone            String
+  dateOfBirth      DateTime?
+  marketingConsent Boolean   @default(false)
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  bookings         Booking[]
+  
+  @@map("customers")
+}
+
+model Booking {
+  id                String         @id @default(uuid())
+  bookingReference  String         @unique @default(cuid())
+  tableId           String
+  customerId        String
+  bookingDate       DateTime
+  bookingTime       String         // Store as HH:MM format
+  partySize         Int
+  status            BookingStatus  @default(PENDING)
+  depositAmount     Decimal        @default(50.00)
+  depositPaid       Boolean        @default(false)
+  stripePaymentId   String?
+  stripeIntentId    String?
+  drinkPackageId    String?
+  specialRequests   String?
+  internalNotes     String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  table             Table          @relation(fields: [tableId], references: [id])
+  customer          Customer       @relation(fields: [customerId], references: [id])
+  drinkPackage      DrinkPackage?  @relation(fields: [drinkPackageId], references: [id])
+  customOrder       CustomOrder?
+  
+  @@unique([tableId, bookingDate, bookingTime])
+  @@index([bookingDate])
+  @@index([status])
+  @@map("bookings")
+}
+
+model DrinkPackage {
+  id           String    @id @default(uuid())
+  name         String    @unique
+  price        Decimal
+  description  String
+  includes     Json      // Store package contents as JSON
+  isActive     Boolean   @default(true)
+  sortOrder    Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  bookings     Booking[]
+  
+  @@map("drink_packages")
+}
+
+model CustomOrder {
+  id          String    @id @default(uuid())
+  bookingId   String    @unique
+  items       Json      // Store selected bottles and quantities as JSON
+  totalPrice  Decimal
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  
+  @@map("custom_orders")
+}
+
+model Spirit {
+  id          String    @id @default(uuid())
+  category    String    // Vodka, Rum, Gin, etc.
+  brand       String
+  name        String
+  price       Decimal
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@unique([category, brand, name])
+  @@index([category])
+  @@map("spirits")
+}
+
+model Champagne {
+  id          String    @id @default(uuid())
+  brand       String
+  name        String
+  price       Decimal
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@unique([brand, name])
+  @@map("champagnes")
+}
+
+// Admin users for the management dashboard
+model AdminUser {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         String    @default("staff") // staff, manager, admin
+  isActive     Boolean   @default(true)
+  lastLogin    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  @@map("admin_users")
+}
