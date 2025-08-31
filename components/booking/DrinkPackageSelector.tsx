@@ -113,8 +113,8 @@ export default function DrinkPackageSelector({
                         onChange={() => onSpiritToggle(spirit.id)}
                         className="accent-gold"
                       />
-                      <span className="text-cream text-sm flex-1">{spirit.name}</span>
-                      <span className="text-gold text-sm">£{spirit.price}</span>
+                      <span className="text-cream text-sm flex-1">{spirit.brand} {spirit.name}</span>
+                      <span className="text-gold text-sm">£{typeof spirit.price === 'object' && 'toNumber' in spirit.price ? spirit.price.toNumber() : spirit.price}</span>
                     </label>
                   ))}
                 </div>
@@ -137,8 +137,8 @@ export default function DrinkPackageSelector({
                     onChange={() => onChampagneToggle(champagne.id)}
                     className="accent-gold"
                   />
-                  <span className="text-cream text-sm flex-1">{champagne.name}</span>
-                  <span className="text-gold text-sm">£{champagne.price}</span>
+                  <span className="text-cream text-sm flex-1">{champagne.brand} {champagne.name}</span>
+                  <span className="text-gold text-sm">£{typeof champagne.price === 'object' && 'toNumber' in champagne.price ? champagne.price.toNumber() : champagne.price}</span>
                 </label>
               ))}
             </div>

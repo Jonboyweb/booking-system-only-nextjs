@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const spirits = await prisma.spirit.findMany({
       where: {
-        isAvailable: true
+        isActive: true
       },
       orderBy: [
         { category: 'asc' },
@@ -13,7 +13,13 @@ export async function GET() {
       ]
     });
     
-    return NextResponse.json(spirits);
+    // Map isActive to isAvailable for frontend compatibility
+    const mappedSpirits = spirits.map(spirit => ({
+      ...spirit,
+      isAvailable: spirit.isActive
+    }));
+    
+    return NextResponse.json(mappedSpirits);
   } catch (error) {
     console.error('Failed to fetch spirits:', error);
     return NextResponse.json(

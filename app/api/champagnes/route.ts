@@ -5,14 +5,20 @@ export async function GET() {
   try {
     const champagnes = await prisma.champagne.findMany({
       where: {
-        isAvailable: true
+        isActive: true
       },
       orderBy: {
         price: 'asc'
       }
     });
     
-    return NextResponse.json(champagnes);
+    // Map isActive to isAvailable for frontend compatibility
+    const mappedChampagnes = champagnes.map(champagne => ({
+      ...champagne,
+      isAvailable: champagne.isActive
+    }));
+    
+    return NextResponse.json(mappedChampagnes);
   } catch (error) {
     console.error('Failed to fetch champagnes:', error);
     return NextResponse.json(

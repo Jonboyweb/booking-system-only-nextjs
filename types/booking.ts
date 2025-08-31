@@ -43,16 +43,20 @@ export interface DrinkPackage {
 export interface Spirit {
   id: string;
   name: string;
+  brand: string;
   category: string;
-  price: number;
+  price: number | string | { toNumber: () => number };
   isAvailable: boolean;
+  isActive?: boolean;
 }
 
 export interface Champagne {
   id: string;
   name: string;
-  price: number;
+  brand: string;
+  price: number | string | { toNumber: () => number };
   isAvailable: boolean;
+  isActive?: boolean;
 }
 
 export type BookingStep = 'date' | 'table' | 'drinks' | 'details' | 'payment';
