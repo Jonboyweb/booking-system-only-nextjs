@@ -200,9 +200,12 @@ export default function AdminDashboard() {
                     <StatusBadge status={booking.status} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-indigo-600 hover:text-indigo-900">
+                    <a 
+                      href={`/admin/dashboard/bookings/${booking.id}`}
+                      className="text-indigo-600 hover:text-indigo-900"
+                    >
                       View
-                    </button>
+                    </a>
                   </td>
                 </tr>
               ))}
