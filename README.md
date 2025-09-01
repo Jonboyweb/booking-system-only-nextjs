@@ -125,6 +125,10 @@ docker-compose up -d    # Start services
 docker-compose down     # Stop services
 docker-compose logs -f  # View logs
 
+# Admin
+npx tsx scripts/seed-admin.ts  # Create default admin user
+npx tsx scripts/create-admin.ts  # Create custom admin user
+
 # Email Testing
 npx tsx scripts/test-email.ts <email>  # Test email sending
 npx tsx scripts/simulate-payment.ts <booking-ref>  # Simulate payment & email
@@ -133,6 +137,16 @@ npx tsx scripts/resend-email.ts <booking-ref>  # Resend confirmation
 # Stripe Webhook (for local testing)
 stripe listen --forward-to localhost:3000/api/payment/webhook
 ```
+
+## 👤 Admin Access
+
+Access the admin dashboard at `/admin/login`
+
+**Default Credentials:**
+- Email: `admin@backroomleeds.co.uk`
+- Password: `admin123`
+
+⚠️ **Important:** Change the default password after first login!
 
 ## 📁 Project Structure
 
@@ -195,12 +209,20 @@ booking-system-only-nextjs/
   - Webhook debugging tools
   - Table formatting fixed (Table X - Floor)
 
+- **Phase 7: Admin Dashboard** ✅ COMPLETED
+  - JWT-based authentication system
+  - Real-time booking overview dashboard
+  - Table management interface
+  - Customer database with search
+  - Analytics and revenue reporting
+  - Manual booking creation
+  - Booking status management
+
 ### ⏳ Upcoming Phases
-- Phase 7: Admin Dashboard
 - Phase 8: Mobile Optimization & Testing
 - Phase 9: Final Polish & Deployment
 
-**Overall Progress**: 67% Complete (6 of 9 phases)
+**Overall Progress**: 78% Complete (7 of 9 phases)
 
 ## 📄 License
 
