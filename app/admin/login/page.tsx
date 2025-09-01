@@ -1,17 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async () => {
+    console.log('Login attempt with:', { email, password });
     setError('');
     setLoading(true);
 
@@ -23,16 +21,22 @@ export default function AdminLoginPage() {
       });
 
       const data = await response.json();
+      console.log('Login response:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Login failed');
       }
 
-      // Redirect to admin dashboard
-      router.push('/admin/dashboard');
+      // Success - force navigation with a form submission
+      const form = document.createElement('form');
+      form.method = 'GET';
+      form.action = '/admin/dashboard';
+      document.body.appendChild(form);
+      form.submit();
+      
     } catch (err) {
+      console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'Login failed');
-    } finally {
       setLoading(false);
     }
   };
@@ -52,7 +56,7 @@ export default function AdminLoginPage() {
           </div>
 
           {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-6">
             <div>
               <label 
                 htmlFor="email" 
@@ -65,9 +69,14 @@ export default function AdminLoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
                 className="w-full px-4 py-2 border border-prohibition-gold/30 rounded-md bg-white focus:ring-2 focus:ring-prohibition-gold focus:border-transparent"
                 placeholder="admin@backroomleeds.co.uk"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleLogin();
+                  }
+                }}
               />
             </div>
 
@@ -83,9 +92,14 @@ export default function AdminLoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
                 className="w-full px-4 py-2 border border-prohibition-gold/30 rounded-md bg-white focus:ring-2 focus:ring-prohibition-gold focus:border-transparent"
                 placeholder="Enter your password"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleLogin();
+                  }
+                }}
               />
             </div>
 
@@ -96,18 +110,34 @@ export default function AdminLoginPage() {
             )}
 
             <button
-              type="submit"
-              disabled={loading}
+              type="button"
+              onClick={handleLogin}
+              disabled={loading || !email || !password}
               className="w-full bg-prohibition-gold text-prohibition-dark py-3 px-4 rounded-md font-medium hover:bg-prohibition-gold/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
-          </form>
+
+            {/* Quick fill for testing */}
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('admin@backroomleeds.co.uk');
+                setPassword('admin123');
+              }}
+              className="w-full bg-gray-200 text-gray-700 py-2 px-3 rounded-md text-sm hover:bg-gray-300 transition"
+            >
+              Fill Test Credentials
+            </button>
+          </div>
 
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-prohibition-gold/20 text-center">
             <p className="text-xs text-prohibition-brown/60">
               Authorized personnel only
+            </p>
+            <p className="text-xs text-prohibition-brown/60 mt-2">
+              Default: admin@backroomleeds.co.uk / admin123
             </p>
           </div>
         </div>
