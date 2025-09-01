@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/lib/generated/prisma';
-import { verifyPassword } from '@/lib/auth/password';
-import { generateToken } from '@/lib/auth/jwt';
+import { verifyPassword } from '@/src/lib/auth/password';
+import { generateToken } from '@/src/lib/auth/jwt';
 import { cookies } from 'next/headers';
 
 const prisma = new PrismaClient();

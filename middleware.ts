@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth/jwt';
+import { verifyToken } from './src/lib/auth/jwt';
 
 export function middleware(request: NextRequest) {
   // Check if it's an admin route

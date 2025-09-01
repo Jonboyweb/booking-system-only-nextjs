@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth/jwt';
+import { verifyToken } from '@/src/lib/auth/jwt';
 
 export async function isAuthenticated(request: NextRequest): Promise<boolean> {
   const token = request.cookies.get('admin-token')?.value;
