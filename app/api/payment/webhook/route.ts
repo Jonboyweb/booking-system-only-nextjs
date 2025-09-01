@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { stripe } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
+import { sendBookingConfirmationEmail } from '../../../../src/lib/email/sendgrid';
 import Stripe from 'stripe';
 
 export async function POST(request: NextRequest) {
@@ -83,12 +84,63 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       customer: true,
       table: true,
       drinksPackage: true,
-      spirits: true,
-      champagnes: true,
+      spirits: {
+        include: {
+          spirit: true
+        }
+      },
+      champagnes: {
+        include: {
+          champagne: true
+        }
+      },
     }
   });
 
-  // TODO: Send confirmation email
+  // Format booking data for email
+  const tableName = `Table ${booking.table.tableNumber} - ${booking.table.floor.charAt(0).toUpperCase() + booking.table.floor.slice(1).toLowerCase()}`;
+  const emailBooking = {
+    id: booking.id,
+    bookingReference: booking.bookingReference,
+    reference_number: booking.bookingReference,
+    tableId: booking.tableId,
+    table_name: tableName,
+    customerId: booking.customerId,
+    name: `${booking.customer.firstName} ${booking.customer.lastName}`,
+    email: booking.customer.email,
+    phone: booking.customer.phone,
+    bookingDate: booking.bookingDate,
+    date: booking.bookingDate.toISOString().split('T')[0],
+    bookingTime: booking.bookingTime,
+    time: booking.bookingTime,
+    partySize: booking.partySize,
+    party_size: booking.partySize,
+    status: booking.status,
+    depositAmount: booking.depositAmount,
+    depositPaid: booking.depositPaid,
+    stripe_payment_intent_id: paymentIntent.id,
+    drinkPackageId: booking.drinkPackageId,
+    drinks_package: booking.drinksPackage?.name,
+    specialRequests: booking.specialRequests,
+    custom_spirits: booking.spirits.length > 0 
+      ? booking.spirits.map(bs => `${bs.spirit.name} (£${bs.spirit.price})`).join('\n')
+      : undefined,
+    custom_champagnes: booking.champagnes.length > 0
+      ? booking.champagnes.map(bc => `${bc.champagne.name} (£${bc.champagne.price})`).join('\n')
+      : undefined,
+    createdAt: booking.createdAt,
+    updatedAt: booking.updatedAt,
+  };
+
+  // Send confirmation email
+  try {
+    await sendBookingConfirmationEmail(emailBooking);
+    console.log(`Confirmation email sent for booking ${booking.bookingReference}`);
+  } catch (error) {
+    console.error(`Failed to send confirmation email for booking ${booking.bookingReference}:`, error);
+    // Don't fail the webhook if email fails - booking is still confirmed
+  }
+
   console.log(`Payment confirmed for booking ${booking.bookingReference}`);
   
   // Log the successful payment
