@@ -245,6 +245,15 @@ Build a comprehensive Next.js table booking system for a prohibition-themed nigh
    - Full audit trail with BookingModification model
    - Confirmation modal with reason tracking
 
+6. **Refund Processing System** ✅ (Added September 1, 2025)
+   - Stripe refund integration for deposit returns
+   - Role-based access control (managers/admins only)
+   - Refund confirmation dialogs with reason tracking
+   - Automated refund confirmation emails
+   - Payment log tracking for audit trail
+   - Visual indicators for refunded bookings
+   - Refund information display in payment section
+
 ## Phase 8: Mobile Optimization & Testing (Day 11)
 1. **Responsive Design**:
    - Mobile-first booking flow

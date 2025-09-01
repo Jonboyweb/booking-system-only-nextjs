@@ -73,12 +73,14 @@ Visit http://localhost:3000 to see the application.
 ### Core Models
 - **Tables**: Venue layout with capacity, features, VIP status
 - **Customers**: Guest profiles with contact info and preferences
-- **Bookings**: Reservations with status tracking and payment info
+- **Bookings**: Reservations with status tracking, payment info, and refund tracking
 - **DrinkPackages**: 8 pre-configured packages (£40-£580)
 - **Spirits**: 31 options across Vodka, Rum, Gin, Cognac, Whiskey, Tequila
 - **Champagnes**: 8 premium selections (£85-£250)
 - **CustomOrders**: Flexible bottle selection system
 - **AdminUsers**: Staff access with role-based permissions
+- **PaymentLog**: Audit trail for all payment events including refunds
+- **BookingModification**: Complete history of booking changes and refunds
 
 ## 🎨 Design Theme
 
@@ -137,6 +139,8 @@ npx tsx scripts/resend-email.ts <booking-ref>  # Resend confirmation
 
 # Feature Testing
 npx tsx scripts/test-booking-modification.ts  # Test booking modification feature
+npx tsx scripts/test-refund.ts  # Test refund functionality
+npx tsx scripts/create-paid-booking.ts  # Create paid booking for testing
 
 # Stripe Webhook (for local testing)
 stripe listen --forward-to localhost:3000/api/payment/webhook
@@ -156,11 +160,12 @@ Access the admin dashboard at `/admin/login`
 - **Overview**: Real-time stats, recent bookings, revenue metrics
 - **Bookings**: Full CRUD operations, status updates, detail views with modification capability
 - **Booking Modifications**: Edit date, time, party size, and table with real-time availability checking
+- **Refund Processing**: Stripe-integrated deposit refunds with email confirmations
 - **Tables**: Manage table availability and view capacity
 - **Customers**: Search customers, view booking history
 - **Analytics**: Revenue reports, booking trends, popular tables/packages
-- **Email Notifications**: Send booking confirmations and modification notices
-- **Audit Trail**: Track all booking changes with modification history
+- **Email Notifications**: Send booking confirmations, modifications, and refund notices
+- **Audit Trail**: Track all booking changes, modifications, and refunds
 - **Settings**: Account management, system information
 
 ## 📁 Project Structure
@@ -229,14 +234,17 @@ booking-system-only-nextjs/
   - Real-time booking overview dashboard
   - Comprehensive booking detail views with edit functionality
   - Booking modification system with real-time availability checking
+  - Stripe refund processing with full audit trail
   - Table management interface with activate/deactivate
   - Customer database with search and booking history
   - Analytics and revenue reporting with visualizations
   - Manual booking creation for walk-ins
   - Booking status management and internal notes
   - Modification email notifications with change tracking
+  - Refund confirmation emails with payment tracking
   - Email resend functionality
   - Full audit trail with BookingModification model
+  - Role-based refund access control
   - Quick test credentials fill
 
 ### ⏳ Upcoming Phases

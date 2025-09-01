@@ -44,6 +44,9 @@ export async function GET(
     const formattedBooking = {
       ...booking,
       depositAmount: Number(booking.depositAmount),
+      depositRefunded: booking.depositRefunded,
+      refundDate: booking.refundDate,
+      refundAmount: booking.refundAmount ? Number(booking.refundAmount) : null,
       spirits: booking.spirits.map(bs => ({
         id: bs.spirit.id,
         name: bs.spirit.name,
@@ -260,6 +263,9 @@ export async function PATCH(
     const formattedBooking = {
       ...updatedBooking,
       depositAmount: Number(updatedBooking.depositAmount),
+      depositRefunded: updatedBooking.depositRefunded,
+      refundDate: updatedBooking.refundDate,
+      refundAmount: updatedBooking.refundAmount ? Number(updatedBooking.refundAmount) : null,
       spirits: updatedBooking.spirits.map(bs => ({
         id: bs.spirit.id,
         name: bs.spirit.name,

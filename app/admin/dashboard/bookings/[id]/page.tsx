@@ -13,6 +13,9 @@ interface BookingDetail {
   partySize: number;
   depositAmount: number;
   depositPaid: boolean;
+  depositRefunded?: boolean;
+  refundDate?: string;
+  refundAmount?: number;
   stripePaymentId?: string;
   stripeIntentId?: string;
   paymentDate?: string;
@@ -324,9 +327,75 @@ export default function BookingDetailPage() {
   };
 
   const handleRefund = async () => {
-    if (!booking || !confirm('Are you sure you want to refund the deposit?')) return;
+    if (!booking) return;
     
-    alert('Refund functionality to be implemented with Stripe integration');
+    const reason = prompt(
+      'Please provide a reason for the refund:\n\n' +
+      '• Customer request\n' +
+      '• Event cancelled\n' +
+      '• Duplicate booking\n' +
+      '• Other',
+      'Customer request'
+    );
+    
+    if (!reason) return; // User cancelled
+    
+    if (!confirm(
+      `Are you sure you want to refund the deposit?\n\n` +
+      `Amount: £${booking.depositAmount}\n` +
+      `Reason: ${reason}\n\n` +
+      `This action cannot be undone.`
+    )) return;
+    
+    try {
+      // Show processing state
+      const processingAlert = document.createElement('div');
+      processingAlert.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      processingAlert.textContent = 'Processing refund...';
+      document.body.appendChild(processingAlert);
+      
+      const response = await fetch(`/api/admin/bookings/${booking.id}/refund`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reason: reason,
+          sendEmail: true
+        })
+      });
+      
+      const data = await response.json();
+      
+      // Remove processing alert
+      document.body.removeChild(processingAlert);
+      
+      if (response.ok) {
+        // Show success message
+        const successAlert = document.createElement('div');
+        successAlert.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        successAlert.innerHTML = `
+          <div class="font-semibold">Refund Processed Successfully!</div>
+          <div class="text-sm mt-1">Amount: £${data.refund.amount}</div>
+          <div class="text-sm">Reference: ${data.refund.id}</div>
+        `;
+        document.body.appendChild(successAlert);
+        
+        // Remove success alert after 5 seconds
+        setTimeout(() => {
+          if (document.body.contains(successAlert)) {
+            document.body.removeChild(successAlert);
+          }
+        }, 5000);
+        
+        // Refresh booking details
+        fetchBookingDetail(booking.id);
+      } else {
+        // Show error message
+        alert(`Failed to process refund:\n${data.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error processing refund:', error);
+      alert('Error processing refund. Please try again.');
+    }
   };
 
   const handleResendEmail = async () => {
@@ -460,7 +529,7 @@ export default function BookingDetailPage() {
             >
               Resend Email
             </button>
-            {booking.depositPaid && booking.status !== 'CANCELLED' && (
+            {booking.depositPaid && !booking.depositRefunded && booking.status !== 'CANCELLED' && (
               <button
                 onClick={handleRefund}
                 disabled={bookingEditMode}
@@ -468,6 +537,11 @@ export default function BookingDetailPage() {
               >
                 Refund Deposit
               </button>
+            )}
+            {booking.depositRefunded && (
+              <div className="px-4 py-2 bg-gray-200 text-gray-600 rounded-md">
+                Refunded {booking.refundDate && new Date(booking.refundDate).toLocaleDateString()}
+              </div>
             )}
           </div>
         </div>
@@ -752,6 +826,21 @@ export default function BookingDetailPage() {
                 </div>
               )}
             </div>
+            {booking.depositRefunded && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm font-semibold text-red-800 mb-2">Refund Information</p>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-red-600">Refund Amount:</span>
+                    <span className="ml-2 font-medium">£{booking.refundAmount ? (Number(booking.refundAmount) / 100).toFixed(2) : booking.depositAmount}</span>
+                  </div>
+                  <div>
+                    <span className="text-red-600">Refund Date:</span>
+                    <span className="ml-2 font-medium">{booking.refundDate && new Date(booking.refundDate).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
