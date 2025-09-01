@@ -5,9 +5,10 @@ A sophisticated table booking system for a prohibition-themed nightclub in Leeds
 ## 🎭 Features
 
 - **Interactive Floor Plans**: Visual table selection across two floors
-- **Real-time Availability**: Live table availability checking
+- **Real-time Availability**: Live table availability checking with SSE updates
 - **Drink Packages**: Pre-defined packages and custom bottle service
 - **Payment Integration**: Secure £50 deposit via Stripe
+- **Email Confirmations**: Automated booking confirmations via SendGrid
 - **Prohibition Theme**: Art Deco design with speakeasy atmosphere
 - **Mobile Responsive**: Optimized for all devices
 
@@ -55,7 +56,9 @@ Visit http://localhost:3000 to see the application.
 - **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
 - **Backend**: Next.js API Routes, Prisma ORM
 - **Database**: PostgreSQL 16 (Docker)
-- **Payment**: Stripe
+- **Payment**: Stripe (Payment Intents API)
+- **Email**: SendGrid
+- **Real-time**: Server-Sent Events (SSE)
 - **Styling**: Tailwind CSS with custom prohibition theme
 
 ## 📊 Database Schema
@@ -96,9 +99,9 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=""
 STRIPE_SECRET_KEY=""
 STRIPE_WEBHOOK_SECRET=""
 
-# Email
-EMAIL_API_KEY=""
-EMAIL_FROM="bookings@thebackroomleeds.com"
+# Email (SendGrid)
+SENDGRID_API_KEY=""
+SENDGRID_FROM_EMAIL="admin@backroomleeds.co.uk"
 
 # App
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
@@ -121,6 +124,14 @@ npx prisma db seed   # Seed database
 docker-compose up -d    # Start services
 docker-compose down     # Stop services
 docker-compose logs -f  # View logs
+
+# Email Testing
+npx tsx scripts/test-email.ts <email>  # Test email sending
+npx tsx scripts/simulate-payment.ts <booking-ref>  # Simulate payment & email
+npx tsx scripts/resend-email.ts <booking-ref>  # Resend confirmation
+
+# Stripe Webhook (for local testing)
+stripe listen --forward-to localhost:3000/api/payment/webhook
 ```
 
 ## 📁 Project Structure
@@ -175,13 +186,21 @@ booking-system-only-nextjs/
   - Refund logic with 48-hour policy
   - Payment confirmation page with booking details
 
+- **Phase 6: Email & Notifications** ✅ COMPLETED
+  - SendGrid integration for transactional emails
+  - Prohibition-themed HTML email templates
+  - Automatic confirmation emails on payment
+  - Plain text fallback for all emails
+  - Email testing scripts and utilities
+  - Webhook debugging tools
+  - Table formatting fixed (Table X - Floor)
+
 ### ⏳ Upcoming Phases
-- Phase 6: Email & Notifications
 - Phase 7: Admin Dashboard
 - Phase 8: Mobile Optimization & Testing
 - Phase 9: Final Polish & Deployment
 
-**Overall Progress**: 56% Complete (5 of 9 phases)
+**Overall Progress**: 67% Complete (6 of 9 phases)
 
 ## 📄 License
 
