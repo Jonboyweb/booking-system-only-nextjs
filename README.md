@@ -58,6 +58,7 @@ Visit http://localhost:3000 to see the application.
 - **Database**: PostgreSQL 16 (Docker)
 - **Payment**: Stripe (Payment Intents API)
 - **Email**: SendGrid
+- **Authentication**: JWT with bcrypt (Edge Runtime compatible)
 - **Real-time**: Server-Sent Events (SSE)
 - **Styling**: Tailwind CSS with custom prohibition theme
 
@@ -148,6 +149,14 @@ Access the admin dashboard at `/admin/login`
 
 ⚠️ **Important:** Change the default password after first login!
 
+### Admin Dashboard Features:
+- **Overview**: Real-time stats, recent bookings, revenue metrics
+- **Bookings**: Full CRUD operations, status updates, detail views
+- **Tables**: Manage table availability and view capacity
+- **Customers**: Search customers, view booking history
+- **Analytics**: Revenue reports, booking trends, popular tables/packages
+- **Settings**: Account management, system information
+
 ## 📁 Project Structure
 
 ```
@@ -210,13 +219,16 @@ booking-system-only-nextjs/
   - Table formatting fixed (Table X - Floor)
 
 - **Phase 7: Admin Dashboard** ✅ COMPLETED
-  - JWT-based authentication system
+  - JWT-based authentication system (Edge Runtime compatible)
   - Real-time booking overview dashboard
-  - Table management interface
-  - Customer database with search
-  - Analytics and revenue reporting
-  - Manual booking creation
-  - Booking status management
+  - Comprehensive booking detail views
+  - Table management interface with activate/deactivate
+  - Customer database with search and booking history
+  - Analytics and revenue reporting with visualizations
+  - Manual booking creation for walk-ins
+  - Booking status management and internal notes
+  - Email resend functionality
+  - Quick test credentials fill
 
 ### ⏳ Upcoming Phases
 - Phase 8: Mobile Optimization & Testing
