@@ -17,5 +17,8 @@ Booking Features Required:
 
 `table_booking_research.md` is a research document highlighting best practice for table booking systems
 
+`README.md` contains information about the project, ensure this is kept up to date with progress during development
+
 **build implimentation**
-- follow the `PROJECT_PLAN.md` file when building
+- follow the `PROJECT_PLAN.md` file when building, ensure this is kept up to date with progress during development
+

@@ -90,6 +90,7 @@ model Booking {
   spirits           BookingSpirit[]
   champagnes        BookingChampagne[]
   paymentLogs       PaymentLog[]
+  modifications     BookingModification[]
   
   @@unique([tableId, bookingDate, bookingTime])
   @@index([bookingDate])
@@ -224,4 +225,21 @@ model PaymentLog {
   @@index([bookingId])
   @@index([stripePaymentId])
   @@map("payment_logs")
+}
+
+// Booking modification history for audit trail
+model BookingModification {
+  id           String    @id @default(uuid())
+  bookingId    String
+  modifiedBy   String    // admin user email or ID
+  modifiedAt   DateTime  @default(now())
+  previousData Json      // Store old values as JSON
+  newData      Json      // Store new values as JSON
+  reason       String?   // Optional reason for modification
+  emailSent    Boolean   @default(false)
+  
+  booking      Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  
+  @@index([bookingId])
+  @@map("booking_modifications")
 }

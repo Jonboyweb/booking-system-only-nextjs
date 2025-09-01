@@ -135,6 +135,9 @@ npx tsx scripts/test-email.ts <email>  # Test email sending
 npx tsx scripts/simulate-payment.ts <booking-ref>  # Simulate payment & email
 npx tsx scripts/resend-email.ts <booking-ref>  # Resend confirmation
 
+# Feature Testing
+npx tsx scripts/test-booking-modification.ts  # Test booking modification feature
+
 # Stripe Webhook (for local testing)
 stripe listen --forward-to localhost:3000/api/payment/webhook
 ```
@@ -151,10 +154,13 @@ Access the admin dashboard at `/admin/login`
 
 ### Admin Dashboard Features:
 - **Overview**: Real-time stats, recent bookings, revenue metrics
-- **Bookings**: Full CRUD operations, status updates, detail views
+- **Bookings**: Full CRUD operations, status updates, detail views with modification capability
+- **Booking Modifications**: Edit date, time, party size, and table with real-time availability checking
 - **Tables**: Manage table availability and view capacity
 - **Customers**: Search customers, view booking history
 - **Analytics**: Revenue reports, booking trends, popular tables/packages
+- **Email Notifications**: Send booking confirmations and modification notices
+- **Audit Trail**: Track all booking changes with modification history
 - **Settings**: Account management, system information
 
 ## 📁 Project Structure
@@ -221,13 +227,16 @@ booking-system-only-nextjs/
 - **Phase 7: Admin Dashboard** ✅ COMPLETED
   - JWT-based authentication system (Edge Runtime compatible)
   - Real-time booking overview dashboard
-  - Comprehensive booking detail views
+  - Comprehensive booking detail views with edit functionality
+  - Booking modification system with real-time availability checking
   - Table management interface with activate/deactivate
   - Customer database with search and booking history
   - Analytics and revenue reporting with visualizations
   - Manual booking creation for walk-ins
   - Booking status management and internal notes
+  - Modification email notifications with change tracking
   - Email resend functionality
+  - Full audit trail with BookingModification model
   - Quick test credentials fill
 
 ### ⏳ Upcoming Phases
