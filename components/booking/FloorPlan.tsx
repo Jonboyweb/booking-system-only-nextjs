@@ -45,7 +45,7 @@ export default function FloorPlan({
   // Table positions for visual layout (simplified)
   const tablePositions: Record<number, { x: number; y: number; width: number; height: number }> = {
     // Upstairs tables
-    1: { x: 50, y: 50, width: 120, height: 80 },
+    10: { x: 50, y: 50, width: 120, height: 80 },
     2: { x: 200, y: 50, width: 100, height: 80 },
     3: { x: 350, y: 50, width: 100, height: 80 },
     4: { x: 500, y: 50, width: 100, height: 80 },
@@ -54,7 +54,7 @@ export default function FloorPlan({
     7: { x: 350, y: 180, width: 100, height: 80 },
     8: { x: 500, y: 180, width: 100, height: 80 },
     9: { x: 50, y: 310, width: 120, height: 80 },
-    10: { x: 450, y: 310, width: 150, height: 100 }, // VIP booth
+    1: { x: 450, y: 310, width: 150, height: 100 }, // VIP booth
     // Downstairs tables
     11: { x: 50, y: 50, width: 100, height: 80 },
     12: { x: 200, y: 50, width: 100, height: 80 },
@@ -87,14 +87,19 @@ export default function FloorPlan({
         
         {/* Stage/DJ Booth for upstairs */}
         {floor === 'UPSTAIRS' && (
-          <rect x="225" y="350" width="200" height="60" fill="#2a2a2a" stroke="#D4AF37" strokeWidth="2">
-            <title>DJ Booth</title>
-          </rect>
+          <>
+            <rect x="525" y="0" width="75" height="30" fill="#2a2a2a" stroke="#D4AF37" strokeWidth="2">
+              <title>DJ Booth</title>
+            </rect>
+            <text x="562.5" y="20" textAnchor="middle" fill="#D4AF37" className="font-poiret text-sm">
+              DJ
+            </text>
+          </>
         )}
         
         {/* Bar area */}
-        <rect x="0" y="0" width="650" height="30" fill="#2a2a2a" stroke="#D4AF37" strokeWidth="1" />
-        <text x="325" y="20" textAnchor="middle" fill="#D4AF37" className="font-poiret text-sm">
+        <rect x="50" y="0" width="250" height="30" fill="#2a2a2a" stroke="#D4AF37" strokeWidth="1" />
+        <text x="175" y="20" textAnchor="middle" fill="#D4AF37" className="font-poiret text-sm">
           BAR
         </text>
         
