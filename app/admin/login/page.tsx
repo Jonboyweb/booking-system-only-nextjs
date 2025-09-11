@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleLogin = async () => {
     console.log('Login attempt with:', { email, password });
@@ -27,12 +29,10 @@ export default function AdminLoginPage() {
         throw new Error(data.error || 'Login failed');
       }
 
-      // Success - force navigation with a form submission
-      const form = document.createElement('form');
-      form.method = 'GET';
-      form.action = '/admin/dashboard';
-      document.body.appendChild(form);
-      form.submit();
+      // Success - use Next.js router to navigate
+      console.log('Login successful, redirecting to dashboard...');
+      router.push('/admin/dashboard');
+      router.refresh(); // Refresh to ensure middleware picks up the new cookie
       
     } catch (err) {
       console.error('Login error:', err);
