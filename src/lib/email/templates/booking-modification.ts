@@ -1,6 +1,23 @@
+interface BookingData {
+  reference_number?: string;
+  customer_name?: string;
+  email?: string;
+  table_name?: string;
+  booking_date?: string;
+  booking_time?: string;
+  party_size?: number;
+  special_requests?: string;
+  deposit_amount?: number;
+  drink_package?: string;
+  custom_spirits?: string;
+  custom_champagnes?: string;
+  custom_order_total?: number;
+  [key: string]: unknown;
+}
+
 interface ModificationData {
-  originalBooking: any;
-  updatedBooking: any;
+  originalBooking: BookingData;
+  updatedBooking: BookingData;
   modificationReason?: string;
   modifiedBy?: string;
 }

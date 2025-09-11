@@ -29,7 +29,7 @@ export default function BookingsPage() {
 
   useEffect(() => {
     fetchBookings();
-  }, [filter, dateFilter]);
+  }, [filter, dateFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchBookings = async () => {
     try {

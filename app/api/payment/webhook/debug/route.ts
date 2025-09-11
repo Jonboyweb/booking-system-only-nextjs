@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       console.log('  Payment Intent ID:', event.data?.object?.id);
       console.log('  Metadata:', event.data?.object?.metadata);
     }
-  } catch (e) {
+  } catch {
     console.log('  Could not parse body as JSON');
   }
   

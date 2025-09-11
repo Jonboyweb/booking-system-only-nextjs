@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 export default function NewBookingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [tables, setTables] = useState<any[]>([]);
-  const [packages, setPackages] = useState<any[]>([]);
+  const [tables, setTables] = useState<Array<{id: string; tableNumber: number; floor: string; capacityMin: number; capacityMax: number;}>>([]);
+  const [packages, setPackages] = useState<Array<{id: string; name: string; price: number; description: string;}>>([]);
   
   const [formData, setFormData] = useState({
     // Customer details
@@ -90,7 +90,7 @@ export default function NewBookingPage() {
       });
 
       if (bookingRes.ok) {
-        const booking = await bookingRes.json();
+        // Booking created successfully, redirect
         router.push('/admin/dashboard/bookings');
       } else {
         throw new Error('Failed to create booking');

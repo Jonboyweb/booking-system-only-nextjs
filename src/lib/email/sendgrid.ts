@@ -18,14 +18,21 @@ function getFromEmail(): string {
   return process.env.SENDGRID_FROM_EMAIL || 'noreply@thebackroomleeds.com';
 }
 
-export async function sendBookingConfirmationEmail(booking: Booking & { email?: string; [key: string]: any }): Promise<boolean> {
+interface BookingWithEmail extends Booking {
+  email?: string;
+  reference_number?: string;
+  modification_reason?: string;
+  [key: string]: unknown;
+}
+
+export async function sendBookingConfirmationEmail(booking: BookingWithEmail): Promise<boolean> {
   const apiKey = getApiKey();
   if (!apiKey) {
     console.error('Cannot send email: SENDGRID_API_KEY is not configured');
     return false;
   }
 
-  const email = (booking as any).email;
+  const email = booking.email;
   if (!email) {
     console.error('Cannot send email: No email address provided');
     return false;
@@ -46,7 +53,7 @@ export async function sendBookingConfirmationEmail(booking: Booking & { email?: 
     };
 
     await sgMail.send(msg);
-    console.log(`Booking confirmation email sent to ${email} for booking ${(booking as any).reference_number || booking.bookingReference}`);
+    console.log(`Booking confirmation email sent to ${email} for booking ${booking.reference_number || booking.bookingReference}`);
     return true;
   } catch (error) {
     console.error('Error sending booking confirmation email:', error);

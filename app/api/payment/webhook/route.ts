@@ -116,7 +116,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       ? booking.champagnes.map(bc => `${bc.champagne.name} (£${bc.champagne.price})`).join('\n')
       : undefined,
     stripe_payment_intent_id: paymentIntent.id
-  } as any;
+  };
 
   // Send confirmation email
   try {
@@ -137,7 +137,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       amount: paymentIntent.amount,
       currency: paymentIntent.currency,
       status: 'SUCCEEDED',
-      metadata: paymentIntent.metadata as any,
+      metadata: paymentIntent.metadata as Record<string, string>,
     }
   });
 }
@@ -159,7 +159,7 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
       currency: paymentIntent.currency,
       status: 'FAILED',
       errorMessage: paymentIntent.last_payment_error?.message,
-      metadata: paymentIntent.metadata as any,
+      metadata: paymentIntent.metadata as Record<string, string>,
     }
   });
 
@@ -198,7 +198,7 @@ async function handleRefund(charge: Stripe.Charge) {
       amount: -charge.amount_refunded,
       currency: charge.currency,
       status: 'REFUNDED',
-      metadata: { chargeId: charge.id } as any,
+      metadata: { chargeId: charge.id } as Record<string, string>,
     }
   });
 

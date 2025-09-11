@@ -1,5 +1,18 @@
+interface RefundBooking {
+  reference_number?: string;
+  bookingReference?: string;
+  customer_name?: string;
+  email?: string;
+  table_name?: string;
+  booking_date?: string;
+  booking_time?: string;
+  deposit_amount?: number;
+  depositAmount?: number;
+  [key: string]: unknown;
+}
+
 interface RefundData {
-  booking: any;
+  booking: RefundBooking;
   refundAmount: number;
   refundId: string;
   reason: string;

@@ -30,7 +30,6 @@ interface PaymentFormProps {
 }
 
 function CheckoutForm({ 
-  bookingId, 
   bookingReference,
   customerEmail,
   customerName,
@@ -77,7 +76,7 @@ function CheckoutForm({
       } else {
         onSuccess();
       }
-    } catch (err) {
+    } catch {
       setMessage('Payment processing failed. Please try again.');
       onError('Payment processing failed');
     } finally {

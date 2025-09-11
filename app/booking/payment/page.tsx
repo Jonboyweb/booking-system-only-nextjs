@@ -3,14 +3,14 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import PaymentForm from '@/components/payment/PaymentForm';
-import { formatAmount, DEPOSIT_AMOUNT } from '@/lib/stripe';
+import '@/lib/stripe';
 
 function PaymentContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const bookingId = searchParams.get('bookingId');
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [bookingDetails, setBookingDetails] = useState<any>(null);
+  const [bookingDetails, setBookingDetails] = useState<{bookingReference: string; customer: {email: string; firstName: string; lastName: string;}; table: {tableNumber: number; floor: string;}; bookingDate: string; bookingTime: string; partySize: number; depositAmount: number;} | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,7 +22,7 @@ function PaymentContent() {
     }
 
     fetchPaymentIntent();
-  }, [bookingId]);
+  }, [bookingId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchPaymentIntent = async () => {
     try {

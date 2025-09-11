@@ -44,7 +44,7 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     fetchAnalytics();
-  }, [dateRange]);
+  }, [dateRange]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchAnalytics = async () => {
     try {
@@ -235,7 +235,14 @@ export default function AnalyticsPage() {
   );
 }
 
-function StatCard({ title, value, change, positive }: any) {
+interface StatCardProps {
+  title: string;
+  value: string;
+  change: string;
+  positive: boolean;
+}
+
+function StatCard({ title, value, change, positive }: StatCardProps) {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex items-center justify-between">

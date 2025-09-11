@@ -58,7 +58,7 @@ export interface DrinkPackage {
   name: string;
   price: number;
   description: string;
-  includes: any;
+  includes: string[];
   isActive: boolean;
 }
 

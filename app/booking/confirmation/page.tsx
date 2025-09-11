@@ -1,15 +1,16 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, Calendar, Clock, Users, MapPin, CreditCard } from 'lucide-react';
 
 function ConfirmationContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  // router is available if needed
+  // const router = useRouter();
   const reference = searchParams.get('reference');
-  const [booking, setBooking] = useState<any>(null);
+  const [booking, setBooking] = useState<{bookingReference: string; bookingDate: string; bookingTime: string; partySize: number; table: {tableNumber: number; floor: string;}; customer: {firstName: string; lastName: string; email: string; phone: string;}; drinkPackage?: {name: string; price: number;}; customOrder?: {totalPrice: number;}; depositAmount: number;} | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,7 +22,7 @@ function ConfirmationContent() {
     }
 
     fetchBookingDetails();
-  }, [reference]);
+  }, [reference]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchBookingDetails = async () => {
     try {

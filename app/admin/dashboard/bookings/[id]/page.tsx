@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 
 interface BookingDetail {
@@ -90,7 +90,8 @@ interface AvailabilityCheck {
 
 export default function BookingDetailPage() {
   const params = useParams();
-  const router = useRouter();
+  // router is available if needed for navigation
+  // const router = useRouter();
   const [booking, setBooking] = useState<BookingDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
@@ -245,7 +246,7 @@ export default function BookingDetailPage() {
     if (!booking) return;
 
     try {
-      const updateData: any = {};
+      const updateData: Record<string, string | number | boolean> = {};
       
       if (editForm.bookingDate !== originalForm.bookingDate) {
         updateData.bookingDate = editForm.bookingDate;

@@ -34,7 +34,7 @@ export default function BookingFlow() {
   const [selectedTable, setSelectedTable] = useState<Table | undefined>();
   
   // Use real-time availability stream
-  const { availability, isConnected } = useAvailabilityStream(formData.date);
+  const { isConnected } = useAvailabilityStream(formData.date);
   
   // Load initial data
   useEffect(() => {

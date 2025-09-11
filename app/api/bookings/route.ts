@@ -157,8 +157,8 @@ export async function POST(request: Request) {
       // Calculate total price
       let totalPrice = 0;
       const items: {
-        spirits: any[];
-        champagnes: any[];
+        spirits: Array<{id: string; price: number;}>;
+        champagnes: Array<{id: string; price: number;}>;
       } = {
         spirits: [],
         champagnes: []

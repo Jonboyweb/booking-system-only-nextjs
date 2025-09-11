@@ -61,7 +61,7 @@ export async function POST(
         ? booking.champagnes.map(bc => `${bc.quantity}x ${bc.champagne.brand} ${bc.champagne.name}`).join('\n')
         : undefined,
       stripe_payment_intent_id: booking.stripeIntentId
-    } as any;
+    };
 
     // Send email
     const emailSent = await sendBookingConfirmationEmail(bookingWithEmail);

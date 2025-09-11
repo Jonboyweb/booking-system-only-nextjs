@@ -1,4 +1,28 @@
-export function generateBookingConfirmationEmail(booking: any): {
+interface EmailBooking {
+  date?: string;
+  reference_number?: string;
+  bookingReference?: string;
+  customer_name?: string;
+  email?: string;
+  table_name?: string;
+  booking_date?: string;
+  booking_time?: string;
+  party_size?: number;
+  partySize?: number;
+  special_requests?: string;
+  specialRequests?: string;
+  deposit_amount?: number;
+  depositAmount?: number;
+  drink_package?: string;
+  custom_spirits?: string;
+  custom_champagnes?: string;
+  custom_order_total?: number;
+  stripe_payment_intent_id?: string;
+  stripeIntentId?: string;
+  [key: string]: unknown;
+}
+
+export function generateBookingConfirmationEmail(booking: EmailBooking): {
   subject: string;
   text: string;
   html: string;

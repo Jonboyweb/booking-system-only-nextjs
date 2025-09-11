@@ -77,17 +77,17 @@ export async function POST(
     }
 
     // Format booking data for email template
-    const formatBookingForEmail = (bookingData: any, isOriginal: boolean = false) => {
+    const formatBookingForEmail = (bookingData: typeof booking, isOriginal: boolean = false) => {
       const tableName = isOriginal && originalBooking.table_name 
         ? originalBooking.table_name 
         : `Table ${bookingData.table.tableNumber} - ${bookingData.table.floor.charAt(0).toUpperCase() + bookingData.table.floor.slice(1).toLowerCase()}`;
       
       const formattedSpirits = bookingData.spirits?.length > 0
-        ? bookingData.spirits.map((bs: any) => `${bs.quantity}x ${bs.spirit.brand} ${bs.spirit.name}`).join('\n')
+        ? bookingData.spirits.map((bs) => `${bs.quantity}x ${bs.spirit.brand} ${bs.spirit.name}`).join('\n')
         : null;
         
       const formattedChampagnes = bookingData.champagnes?.length > 0
-        ? bookingData.champagnes.map((bc: any) => `${bc.quantity}x ${bc.champagne.brand} ${bc.champagne.name}`).join('\n')
+        ? bookingData.champagnes.map((bc) => `${bc.quantity}x ${bc.champagne.brand} ${bc.champagne.name}`).join('\n')
         : null;
 
       return {

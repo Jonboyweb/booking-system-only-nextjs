@@ -78,7 +78,7 @@ export async function getAvailableTablesForDateTime(
   time: string,
   partySize: number,
   excludeBookingId?: string
-): Promise<any[]> {
+): Promise<Array<{id: string; tableNumber: number; floor: string; capacityMin: number; capacityMax: number; isVip: boolean; description: string; features: string[];}>> {
   try {
     const bookingDate = new Date(date);
     
@@ -219,7 +219,7 @@ export async function getBookingConflicts(
   date: string,
   time: string,
   excludeBookingId: string
-): Promise<any[]> {
+): Promise<Array<{bookingReference: string; customerName: string; partySize: number;}>> {
   try {
     const bookingDate = new Date(date);
     
@@ -282,7 +282,7 @@ export async function getTableWithAvailability(
   date: string,
   time: string,
   excludeBookingId?: string
-): Promise<any> {
+): Promise<{id: string; tableNumber: number; floor: string; capacityMin: number; capacityMax: number; isVip: boolean; isAvailable: boolean;} | null> {
   try {
     const table = await prisma.table.findUnique({
       where: { id: tableId }

@@ -105,7 +105,7 @@ export default function CustomerDetailsForm({
             className="mt-1 accent-gold"
           />
           <label htmlFor="marketing" className="text-sm text-cream-dark">
-            I'd like to receive exclusive offers and updates from The Backroom Leeds
+            I&apos;d like to receive exclusive offers and updates from The Backroom Leeds
           </label>
         </div>
       </div>

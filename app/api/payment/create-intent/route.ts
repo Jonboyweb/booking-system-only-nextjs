@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { bookingId, customerEmail, customerName } = body;
+    const { bookingId, customerEmail } = body;
 
     if (!bookingId) {
       return NextResponse.json(
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
             alreadyPaid: true
           });
         }
-      } catch (error) {
+      } catch {
         // Intent not found or invalid, create new one
         console.log('Creating new intent, previous one not found');
       }
