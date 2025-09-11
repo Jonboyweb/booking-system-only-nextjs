@@ -26,7 +26,10 @@ export async function processRefund(
   reason: string = 'requested_by_customer'
 ): Promise<RefundResult> {
   try {
+    console.log('processRefund called with:', { paymentIntentId, amount, reason });
+    
     if (!paymentIntentId) {
+      console.error('No payment intent ID provided');
       return {
         success: false,
         error: 'Payment intent ID is required'
@@ -34,16 +37,20 @@ export async function processRefund(
     }
 
     // Retrieve the payment intent to get charge information
+    console.log('Retrieving payment intent:', paymentIntentId);
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     
     if (!paymentIntent) {
+      console.error('Payment intent not found:', paymentIntentId);
       return {
         success: false,
         error: 'Payment intent not found'
       };
     }
 
+    console.log('Payment intent status:', paymentIntent.status);
     if (paymentIntent.status !== 'succeeded') {
+      console.error('Cannot refund - payment intent status:', paymentIntent.status);
       return {
         success: false,
         error: `Payment intent status is ${paymentIntent.status}, cannot refund`
@@ -59,9 +66,14 @@ export async function processRefund(
     // If amount is specified, add it (in pence)
     if (amount) {
       refundParams.amount = amount;
+      console.log('Creating refund with amount:', amount);
+    } else {
+      console.log('Creating full refund');
     }
 
+    console.log('Refund params:', refundParams);
     const refund = await stripe.refunds.create(refundParams);
+    console.log('Refund created successfully:', refund.id);
 
     return {
       success: true,
@@ -71,18 +83,25 @@ export async function processRefund(
       refundDate: new Date()
     };
   } catch (error) {
-    console.error('Stripe refund error:', error);
+    console.error('Stripe refund error - Full details:', error);
     
     if (error instanceof Stripe.errors.StripeError) {
+      console.error('Stripe error details:', {
+        type: error.type,
+        code: error.code,
+        message: error.message,
+        statusCode: error.statusCode
+      });
       return {
         success: false,
         error: error.message || 'Stripe refund failed'
       };
     }
     
+    console.error('Non-Stripe error:', error);
     return {
       success: false,
-      error: 'Failed to process refund'
+      error: error instanceof Error ? error.message : 'Failed to process refund'
     };
   }
 }

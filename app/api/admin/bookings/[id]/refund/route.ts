@@ -5,6 +5,25 @@ import { processRefund } from '@/src/lib/payment/stripe-refund';
 
 const prisma = new PrismaClient();
 
+// Map user-friendly reasons to Stripe's valid reasons
+function mapToStripeReason(reason: string | undefined): string {
+  if (!reason) return 'requested_by_customer';
+  
+  const lowerReason = reason.toLowerCase();
+  
+  // Check for keywords to map to valid Stripe reasons
+  if (lowerReason.includes('duplicate') || lowerReason.includes('double')) {
+    return 'duplicate';
+  }
+  if (lowerReason.includes('fraud') || lowerReason.includes('suspicious')) {
+    return 'fraudulent';
+  }
+  
+  // Default to requested_by_customer for all other cases
+  // (Customer request, Event cancelled, Other, etc.)
+  return 'requested_by_customer';
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -72,13 +91,31 @@ export async function POST(
 
     // Process the refund through Stripe
     const refundAmount = amount || Number(booking.depositAmount) * 100; // Convert to pence
+    
+    // Map user-provided reasons to valid Stripe reasons
+    const stripeReason = mapToStripeReason(reason);
+    
+    console.log('Processing refund:', {
+      bookingId: booking.id,
+      stripeIntentId: booking.stripeIntentId,
+      refundAmount,
+      userReason: reason,
+      stripeReason
+    });
+    
     const refundResult = await processRefund(
       booking.stripeIntentId,
       refundAmount,
-      reason || 'requested_by_customer'
+      stripeReason
     );
 
     if (!refundResult.success) {
+      console.error('Refund failed:', {
+        bookingId: booking.id,
+        error: refundResult.error,
+        stripeIntentId: booking.stripeIntentId
+      });
+      
       // Log failed refund attempt
       await prisma.paymentLog.create({
         data: {
@@ -90,7 +127,8 @@ export async function POST(
           errorMessage: refundResult.error,
           metadata: {
             attemptedBy: user.email,
-            reason: reason || 'requested_by_customer'
+            userReason: reason || 'Customer request',
+            stripeReason
           }
         }
       });
@@ -124,7 +162,8 @@ export async function POST(
         metadata: {
           refundedBy: user.email,
           originalPaymentIntent: booking.stripeIntentId,
-          reason: reason || 'requested_by_customer',
+          userReason: reason || 'Customer request',
+          stripeReason,
           refundStatus: refundResult.status
         }
       }

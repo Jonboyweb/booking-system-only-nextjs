@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-11-20.acacia'
+  apiVersion: '2025-08-27.basil'
 });
 
 async function checkPaymentIntent() {
@@ -23,14 +23,10 @@ async function checkPaymentIntent() {
     console.log('\nMetadata:');
     console.log(JSON.stringify(paymentIntent.metadata, null, 2));
     
-    if (paymentIntent.charges && paymentIntent.charges.data.length > 0) {
-      console.log('\nCharges:');
-      paymentIntent.charges.data.forEach(charge => {
-        console.log(`- ${charge.id}: ${charge.status} (${charge.amount / 100} GBP)`);
-        if (charge.outcome) {
-          console.log(`  Outcome: ${charge.outcome.type} - ${charge.outcome.seller_message}`);
-        }
-      });
+    // Charges are not directly available on PaymentIntent in newer API versions
+    // Need to list charges separately if needed
+    if (paymentIntent.latest_charge) {
+      console.log('\nLatest Charge ID:', paymentIntent.latest_charge);
     }
     
     // Check for events related to this payment intent
