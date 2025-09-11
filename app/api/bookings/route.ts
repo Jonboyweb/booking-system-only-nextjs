@@ -178,7 +178,10 @@ export async function POST(request: Request) {
               price: spirit.price
             }
           });
-          items.spirits.push(spirit);
+          items.spirits.push({
+            ...spirit,
+            price: Number(spirit.price)
+          });
           totalPrice += Number(spirit.price);
         }
       }
@@ -197,7 +200,10 @@ export async function POST(request: Request) {
               price: champagne.price
             }
           });
-          items.champagnes.push(champagne);
+          items.champagnes.push({
+            ...champagne,
+            price: Number(champagne.price)
+          });
           totalPrice += Number(champagne.price);
         }
       }

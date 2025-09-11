@@ -50,6 +50,7 @@ async function resendConfirmationEmail(bookingRef: string) {
       table_name: tableName,
       date: booking.bookingDate.toISOString().split('T')[0],
       time: booking.bookingTime,
+      booking_time: booking.bookingTime,
       party_size: booking.partySize,
       drinks_package: booking.drinkPackage?.name,
       custom_spirits: booking.spirits.length > 0 

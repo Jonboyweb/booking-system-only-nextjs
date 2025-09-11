@@ -10,7 +10,7 @@ function ConfirmationContent() {
   // router is available if needed
   // const router = useRouter();
   const reference = searchParams.get('reference');
-  const [booking, setBooking] = useState<{bookingReference: string; bookingDate: string; bookingTime: string; partySize: number; table: {tableNumber: number; floor: string;}; customer: {firstName: string; lastName: string; email: string; phone: string;}; drinkPackage?: {name: string; price: number;}; customOrder?: {totalPrice: number;}; depositAmount: number;} | null>(null);
+  const [booking, setBooking] = useState<{bookingReference: string; bookingDate: string; bookingTime: string; partySize: number; table: {tableNumber: number; floor: string; description?: string;}; customer: {firstName: string; lastName: string; email: string; phone: string;}; drinkPackage?: {name: string; price: number; description?: string;}; customOrder?: {totalPrice: number;}; depositAmount: number; depositPaid?: boolean; specialRequests?: string;} | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -151,11 +151,11 @@ function ConfirmationContent() {
           )}
         </div>
 
-        {booking.drinksPackage && (
+        {booking.drinkPackage && (
           <div className="mt-4 pt-4 border-t">
             <p className="text-sm text-gray-600 mb-1">Drinks Package</p>
-            <p className="font-semibold">{booking.drinksPackage.name}</p>
-            <p className="text-sm text-gray-500">{booking.drinksPackage.description}</p>
+            <p className="font-semibold">{booking.drinkPackage.name}</p>
+            <p className="text-sm text-gray-500">{booking.drinkPackage.description}</p>
           </div>
         )}
 

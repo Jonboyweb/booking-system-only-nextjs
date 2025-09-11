@@ -20,7 +20,15 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [customerBookings, setCustomerBookings] = useState<Array<{id: string; bookingReference: string; bookingDate: string; bookingTime: string; status: string;}>>([]);
+  const [customerBookings, setCustomerBookings] = useState<Array<{
+    id: string; 
+    bookingReference: string; 
+    bookingDate: string; 
+    bookingTime: string; 
+    status: string;
+    tableName: string;
+    partySize: number;
+  }>>([]);
 
   useEffect(() => {
     fetchCustomers();

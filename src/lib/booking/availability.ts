@@ -239,7 +239,11 @@ export async function getBookingConflicts(
       }
     });
 
-    return conflicts;
+    return conflicts.map(conflict => ({
+      bookingReference: conflict.bookingReference,
+      customerName: `${conflict.customer.firstName} ${conflict.customer.lastName}`,
+      partySize: conflict.partySize
+    }));
   } catch (error) {
     console.error('Error checking booking conflicts:', error);
     return [];

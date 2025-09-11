@@ -39,7 +39,12 @@ export async function sendBookingConfirmationEmail(booking: BookingWithEmail): P
   }
 
   try {
-    const { subject, text, html } = generateBookingConfirmationEmail(booking);
+    const { subject, text, html } = generateBookingConfirmationEmail({
+      ...booking,
+      specialRequests: booking.specialRequests || undefined,
+      depositAmount: Number(booking.depositAmount),
+      stripeIntentId: booking.stripeIntentId || undefined
+    });
     
     const msg = {
       to: email,

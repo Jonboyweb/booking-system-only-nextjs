@@ -52,14 +52,14 @@ export function generateBookingModificationEmail(data: ModificationData): {
 
   if (originalBooking.date !== updatedBooking.date) {
     changes.push('Date');
-    changesSummaryHtml += `<li><strong>Date:</strong> ${formatDate(originalBooking.date)} → ${formatDate(updatedBooking.date)}</li>`;
-    changesSummaryText += `- Date: ${formatDate(originalBooking.date)} → ${formatDate(updatedBooking.date)}\n`;
+    changesSummaryHtml += `<li><strong>Date:</strong> ${formatDate(String(originalBooking.date))} → ${formatDate(String(updatedBooking.date))}</li>`;
+    changesSummaryText += `- Date: ${formatDate(String(originalBooking.date))} → ${formatDate(String(updatedBooking.date))}\n`;
   }
 
   if (originalBooking.time !== updatedBooking.time) {
     changes.push('Time');
-    changesSummaryHtml += `<li><strong>Time:</strong> ${formatTime(originalBooking.time)} → ${formatTime(updatedBooking.time)}</li>`;
-    changesSummaryText += `- Time: ${formatTime(originalBooking.time)} → ${formatTime(updatedBooking.time)}\n`;
+    changesSummaryHtml += `<li><strong>Time:</strong> ${formatTime(String(originalBooking.time))} → ${formatTime(String(updatedBooking.time))}</li>`;
+    changesSummaryText += `- Time: ${formatTime(String(originalBooking.time))} → ${formatTime(String(updatedBooking.time))}\n`;
   }
 
   if (originalBooking.party_size !== updatedBooking.party_size) {
@@ -91,8 +91,8 @@ ${modificationReason ? `\nReason for change: ${modificationReason}\n` : ''}
 YOUR UPDATED BOOKING DETAILS
 ----------------------------
 Reference Number: ${updatedBooking.reference_number}
-Date: ${formatDate(updatedBooking.date)}
-Time: ${formatTime(updatedBooking.time)}
+Date: ${formatDate(String(updatedBooking.date))}
+Time: ${formatTime(String(updatedBooking.time))}
 Party Size: ${updatedBooking.party_size} guests
 Table: ${updatedBooking.table_name}
 
@@ -294,11 +294,11 @@ The Backroom Leeds Team
         <div class="section-title">Your Updated Reservation Details</div>
         <div class="detail-row">
           <span class="detail-label">Date:</span>
-          <span class="detail-value ${originalBooking.date !== updatedBooking.date ? 'change-highlight' : ''}">${formatDate(updatedBooking.date)}</span>
+          <span class="detail-value ${originalBooking.date !== updatedBooking.date ? 'change-highlight' : ''}">${formatDate(String(updatedBooking.date))}</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Time:</span>
-          <span class="detail-value ${originalBooking.time !== updatedBooking.time ? 'change-highlight' : ''}">${formatTime(updatedBooking.time)}</span>
+          <span class="detail-value ${originalBooking.time !== updatedBooking.time ? 'change-highlight' : ''}">${formatTime(String(updatedBooking.time))}</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Party Size:</span>

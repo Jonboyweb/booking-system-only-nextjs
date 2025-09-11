@@ -3,14 +3,13 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import PaymentForm from '@/components/payment/PaymentForm';
-import '@/lib/stripe';
 
 function PaymentContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const bookingId = searchParams.get('bookingId');
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [bookingDetails, setBookingDetails] = useState<{bookingReference: string; customer: {email: string; firstName: string; lastName: string;}; table: {tableNumber: number; floor: string;}; bookingDate: string; bookingTime: string; partySize: number; depositAmount: number;} | null>(null);
+  const [bookingDetails, setBookingDetails] = useState<{bookingReference: string; customer: {email: string; firstName: string; lastName: string;}; table: {tableNumber: number; floor: string;}; bookingDate: string; bookingTime: string; partySize: number; depositAmount: number; drinkPackage?: {name: string;};} | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -133,8 +132,8 @@ function PaymentContent() {
           <p><span className="font-semibold">Date:</span> {new Date(bookingDetails.bookingDate).toLocaleDateString()}</p>
           <p><span className="font-semibold">Time:</span> {bookingDetails.bookingTime}</p>
           <p><span className="font-semibold">Party Size:</span> {bookingDetails.partySize} guests</p>
-          {bookingDetails.drinksPackage && (
-            <p><span className="font-semibold">Package:</span> {bookingDetails.drinksPackage.name}</p>
+          {bookingDetails.drinkPackage && (
+            <p><span className="font-semibold">Package:</span> {bookingDetails.drinkPackage.name}</p>
           )}
         </div>
       </div>

@@ -119,8 +119,8 @@ export async function POST(
         drinkPackageId: bookingData.drinkPackageId,
         drinks_package: bookingData.drinkPackage?.name,
         specialRequests: bookingData.specialRequests,
-        custom_spirits: formattedSpirits,
-        custom_champagnes: formattedChampagnes,
+        custom_spirits: formattedSpirits || undefined,
+        custom_champagnes: formattedChampagnes || undefined,
         createdAt: bookingData.createdAt,
         updatedAt: bookingData.updatedAt
       };

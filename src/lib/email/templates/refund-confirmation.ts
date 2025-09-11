@@ -59,8 +59,8 @@ Reason: ${reason}
 ORIGINAL BOOKING DETAILS
 ------------------------
 Reference Number: ${booking.reference_number}
-Date: ${formatDate(booking.date)}
-Time: ${formatTime(booking.time)}
+Date: ${formatDate(String(booking.date))}
+Time: ${formatTime(String(booking.time))}
 Party Size: ${booking.party_size} guests
 Table: ${booking.table_name}
 
@@ -268,11 +268,11 @@ The Backroom Leeds Team
         </div>
         <div class="detail-row">
           <span class="detail-label">Date:</span>
-          <span class="detail-value">${formatDate(booking.date)}</span>
+          <span class="detail-value">${formatDate(String(booking.date))}</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Time:</span>
-          <span class="detail-value">${formatTime(booking.time)}</span>
+          <span class="detail-value">${formatTime(String(booking.time))}</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Party Size:</span>

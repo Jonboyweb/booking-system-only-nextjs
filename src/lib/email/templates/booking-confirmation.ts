@@ -62,8 +62,8 @@ Thank you for your booking at The Backroom Leeds. Your reservation has been conf
 BOOKING DETAILS
 ---------------
 Reference Number: ${booking.reference_number}
-Date: ${formatDate(booking.date)}
-Time: ${formatTime(booking.time)}
+Date: ${formatDate(booking.date || booking.booking_date || '')}
+Time: ${formatTime(booking.booking_time || '')}
 Party Size: ${booking.party_size} guests
 Table: ${booking.table_name}
 
@@ -249,11 +249,11 @@ The Backroom Leeds Team
         <div class="section-title">Reservation Details</div>
         <div class="detail-row">
           <span class="detail-label">Date:</span>
-          <span class="detail-value">${formatDate(booking.date)}</span>
+          <span class="detail-value">${formatDate(booking.date || booking.booking_date || '')}</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Time:</span>
-          <span class="detail-value">${formatTime(booking.time)}</span>
+          <span class="detail-value">${formatTime(booking.booking_time || '')}</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Party Size:</span>

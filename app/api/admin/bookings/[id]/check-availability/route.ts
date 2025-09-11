@@ -52,13 +52,13 @@ export async function POST(
     const capacityValid = await validatePartySize(tableId, partySize);
 
     // Get conflicts if table is not available
-    let conflicts: Array<{bookingReference: string; customerName: string; partySize: number;}> = [];
+    let conflicts: any[] = [];
     if (!isAvailable) {
       conflicts = await getBookingConflicts(tableId, date, time, bookingId);
     }
 
     // Get alternative tables if requested table is not available
-    let alternativeTables: Array<{id: string; tableNumber: number; floor: string; capacityMin: number; capacityMax: number;}> = [];
+    let alternativeTables: any[] = [];
     if (!isAvailable || !capacityValid) {
       alternativeTables = await getAvailableTablesForDateTime(
         date,

@@ -107,6 +107,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     table_name: `Table ${booking.table.tableNumber} - ${booking.table.floor.charAt(0).toUpperCase() + booking.table.floor.slice(1).toLowerCase()}`,
     date: booking.bookingDate.toISOString().split('T')[0],
     time: booking.bookingTime,
+    booking_time: booking.bookingTime,
     party_size: booking.partySize,
     drinks_package: booking.drinkPackage?.name,
     custom_spirits: booking.spirits.length > 0 
