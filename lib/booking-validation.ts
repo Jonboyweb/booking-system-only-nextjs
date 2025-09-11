@@ -1,4 +1,4 @@
-import { Table, Booking } from '@prisma/client';
+import { Table, Booking } from './generated/prisma';
 
 /**
  * Validates if a booking date is within the allowed range (up to 31 days in advance)

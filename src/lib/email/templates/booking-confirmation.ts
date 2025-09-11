@@ -1,6 +1,4 @@
-import { Booking } from '@/types/booking';
-
-export function generateBookingConfirmationEmail(booking: Booking): {
+export function generateBookingConfirmationEmail(booking: any): {
   subject: string;
   text: string;
   html: string;

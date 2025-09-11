@@ -1,7 +1,5 @@
-import { Booking } from '@/types/booking';
-
 interface RefundData {
-  booking: Booking;
+  booking: any;
   refundAmount: number;
   refundId: string;
   reason: string;

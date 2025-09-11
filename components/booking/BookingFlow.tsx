@@ -137,8 +137,8 @@ export default function BookingFlow() {
           partySize: formData.partySize,
           customer: formData.customer,
           drinkPackageId: formData.drinkPackageId,
-          selectedSpirits: formData.selectedSpirits,
-          selectedChampagnes: formData.selectedChampagnes,
+          selectedSpirits: selectedSpirits,
+          selectedChampagnes: selectedChampagnes,
           specialRequests: formData.specialRequests
         })
       });

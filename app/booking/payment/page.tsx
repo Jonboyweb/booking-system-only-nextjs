@@ -141,7 +141,7 @@ function PaymentContent() {
 
       <div className="bg-white p-6 rounded-lg shadow-lg">
         <PaymentForm
-          bookingId={bookingId}
+          bookingId={bookingId!}
           bookingReference={bookingDetails.bookingReference}
           customerEmail={bookingDetails.customer.email}
           customerName={`${bookingDetails.customer.firstName} ${bookingDetails.customer.lastName}`}

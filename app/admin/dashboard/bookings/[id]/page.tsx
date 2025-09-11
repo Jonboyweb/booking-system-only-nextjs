@@ -681,7 +681,7 @@ export default function BookingDetailPage() {
                 <div className="flex space-x-2 pt-4">
                   <button
                     onClick={handleSaveChanges}
-                    disabled={!hasChanges() || (availabilityStatus && !availabilityStatus.available)}
+                    disabled={!hasChanges() || (availabilityStatus ? !availabilityStatus.available : false)}
                     className="px-4 py-2 bg-prohibition-gold text-prohibition-dark rounded-md hover:bg-prohibition-gold/90 transition disabled:opacity-50"
                   >
                     Save Changes

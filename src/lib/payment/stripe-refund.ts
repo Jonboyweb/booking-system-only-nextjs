@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia'
+  apiVersion: '2025-08-27.basil'
 });
 
 export interface RefundResult {
@@ -67,7 +67,7 @@ export async function processRefund(
       success: true,
       refundId: refund.id,
       amount: refund.amount,
-      status: refund.status,
+      status: refund.status || undefined,
       refundDate: new Date()
     };
   } catch (error) {
@@ -104,7 +104,7 @@ export async function checkRefundStatus(refundId: string): Promise<{
     
     return {
       success: true,
-      status: refund.status,
+      status: refund.status || undefined,
       amount: refund.amount,
       created: new Date(refund.created * 1000)
     };

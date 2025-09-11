@@ -1,8 +1,6 @@
-import { Booking } from '@/types/booking';
-
 interface ModificationData {
-  originalBooking: Booking;
-  updatedBooking: Booking;
+  originalBooking: any;
+  updatedBooking: any;
   modificationReason?: string;
   modifiedBy?: string;
 }

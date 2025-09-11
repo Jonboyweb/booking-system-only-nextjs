@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     }
     
     // Validate table capacity
-    if (!isValidTableCapacity(table, body.partySize, combinedTable)) {
+    if (!isValidTableCapacity(table, body.partySize, combinedTable || undefined)) {
       const minCapacity = combinedTable ? 7 : table.capacityMin;
       const maxCapacity = combinedTable ? 
         table.capacityMax + combinedTable.capacityMax : 
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
       body.partySize,
       table,
       existingBookings,
-      combinedTable
+      combinedTable || undefined
     );
     
     if (!validation.valid) {
@@ -156,7 +156,10 @@ export async function POST(request: Request) {
       
       // Calculate total price
       let totalPrice = 0;
-      const items = {
+      const items: {
+        spirits: any[];
+        champagnes: any[];
+      } = {
         spirits: [],
         champagnes: []
       };

@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+.next/
+out/
+build/
+
+# Generated files
+lib/generated/
+*.generated.ts
+*.generated.js
+
+# Prisma generated files
+lib/generated/prisma/
+
+# Scripts (not part of the main application)
+scripts/
+
+# Test files
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Config files
+next.config.js
+tailwind.config.js
+postcss.config.js

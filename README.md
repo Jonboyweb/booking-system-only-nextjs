@@ -42,6 +42,7 @@ docker-compose up -d
 ```bash
 npx prisma migrate dev
 npx prisma db seed
+npx tsx scripts/seed-admin.ts
 ```
 
 5. Start the development server:

@@ -4,10 +4,11 @@ import { isDateWithinBookingWindow } from '@/lib/booking-validation';
 
 export async function GET(
   request: Request,
-  { params }: { params: { date: string } }
+  { params }: { params: Promise<{ date: string }> }
 ) {
   try {
-    const date = new Date(params.date);
+    const { date: dateParam } = await params;
+    const date = new Date(dateParam);
     
     // Validate date is within booking window
     if (!isDateWithinBookingWindow(date)) {
@@ -83,7 +84,7 @@ export async function GET(
     });
     
     return NextResponse.json({
-      date: params.date,
+      date: dateParam,
       totalTables: tables.length,
       timeSlots: availability,
       summary: {

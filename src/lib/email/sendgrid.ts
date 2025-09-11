@@ -1,5 +1,5 @@
 import sgMail from '@sendgrid/mail';
-import { Booking } from '@/types/booking';
+import { Booking } from '@/lib/generated/prisma';
 import { generateBookingConfirmationEmail } from './templates/booking-confirmation';
 
 const FROM_NAME = 'The Backroom Leeds';
@@ -7,7 +7,7 @@ const FROM_NAME = 'The Backroom Leeds';
 // Helper function to get and validate API key
 function getApiKey(): string | undefined {
   const apiKey = process.env.SENDGRID_API_KEY;
-  if (apiKey && !sgMail.client?.auth) {
+  if (apiKey) {
     sgMail.setApiKey(apiKey);
   }
   return apiKey;
@@ -18,14 +18,15 @@ function getFromEmail(): string {
   return process.env.SENDGRID_FROM_EMAIL || 'noreply@thebackroomleeds.com';
 }
 
-export async function sendBookingConfirmationEmail(booking: Booking): Promise<boolean> {
+export async function sendBookingConfirmationEmail(booking: Booking & { email?: string; [key: string]: any }): Promise<boolean> {
   const apiKey = getApiKey();
   if (!apiKey) {
     console.error('Cannot send email: SENDGRID_API_KEY is not configured');
     return false;
   }
 
-  if (!booking.email) {
+  const email = (booking as any).email;
+  if (!email) {
     console.error('Cannot send email: No email address provided');
     return false;
   }
@@ -34,7 +35,7 @@ export async function sendBookingConfirmationEmail(booking: Booking): Promise<bo
     const { subject, text, html } = generateBookingConfirmationEmail(booking);
     
     const msg = {
-      to: booking.email,
+      to: email,
       from: {
         email: getFromEmail(),
         name: FROM_NAME
@@ -45,7 +46,7 @@ export async function sendBookingConfirmationEmail(booking: Booking): Promise<bo
     };
 
     await sgMail.send(msg);
-    console.log(`Booking confirmation email sent to ${booking.email} for booking ${booking.reference_number}`);
+    console.log(`Booking confirmation email sent to ${email} for booking ${(booking as any).reference_number || booking.bookingReference}`);
     return true;
   } catch (error) {
     console.error('Error sending booking confirmation email:', error);

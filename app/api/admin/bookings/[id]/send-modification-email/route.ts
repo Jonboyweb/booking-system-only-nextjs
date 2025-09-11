@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 // Helper function to get and validate API key
 function getApiKey(): string | undefined {
   const apiKey = process.env.SENDGRID_API_KEY;
-  if (apiKey && !sgMail.client?.auth) {
+  if (apiKey) {
     sgMail.setApiKey(apiKey);
   }
   return apiKey;

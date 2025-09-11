@@ -30,7 +30,7 @@ async function testEmails() {
   // Test 2: Send a booking confirmation email
   console.log('\n2. Sending booking confirmation email...');
   
-  const mockBooking: Booking = {
+  const mockBooking: any = {
     id: 'test-booking-id',
     bookingReference: 'BR-TEST123',
     reference_number: 'BR-TEST123',
