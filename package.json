@@ -10,7 +10,14 @@
     "db:check": "tsx scripts/check-db.ts",
     "db:studio": "prisma studio",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop booking-system",
+    "pm2:restart": "pm2 restart booking-system",
+    "pm2:reload": "pm2 reload booking-system",
+    "pm2:delete": "pm2 delete booking-system",
+    "pm2:logs": "pm2 logs booking-system",
+    "pm2:monit": "pm2 monit"
   },
   "keywords": [],
   "author": "",
