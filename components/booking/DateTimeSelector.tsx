@@ -1,6 +1,7 @@
 'use client';
 
-// DateTimeSelector component
+import { useState, useEffect } from 'react';
+import { generateTimeSlots, getOperatingHours } from '@/lib/operating-hours';
 
 interface DateTimeSelectorProps {
   date: string;
@@ -26,10 +27,24 @@ export default function DateTimeSelector({
   const minDate = today.toISOString().split('T')[0];
   const maxDate = new Date(today.getTime() + 31 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   
-  const timeSlots = [
-    '18:00', '18:30', '19:00', '19:30', '20:00', '20:30',
-    '21:00', '21:30', '22:00', '22:30', '23:00', '23:30'
-  ];
+  const [timeSlots, setTimeSlots] = useState<string[]>([]);
+  const [operatingHours, setOperatingHours] = useState<{ startTime: string; endTime: string; isSpecialEvent: boolean; eventName?: string } | null>(null);
+  
+  // Update time slots when date changes
+  useEffect(() => {
+    if (date) {
+      const selectedDate = new Date(date);
+      const hours = getOperatingHours(selectedDate);
+      const slots = generateTimeSlots(selectedDate);
+      setOperatingHours(hours);
+      setTimeSlots(slots);
+      
+      // Reset time if it's not in the new slots
+      if (time && !slots.includes(time)) {
+        onTimeChange('');
+      }
+    }
+  }, [date, time, onTimeChange]);
   
   const isValid = date && time && partySize >= 2 && partySize <= 12;
   
@@ -49,27 +64,50 @@ export default function DateTimeSelector({
             max={maxDate}
             className="w-full p-3 bg-charcoal border border-gold rounded text-cream focus:outline-none focus:border-gold-light"
           />
-          <p className="text-xs text-cream-dark mt-1">Book up to 31 days in advance</p>
+          {operatingHours?.isSpecialEvent ? (
+            <p className="text-xs text-gold mt-1">
+              🎉 {operatingHours.eventName}: {operatingHours.startTime} - {operatingHours.endTime}
+            </p>
+          ) : operatingHours ? (
+            <p className="text-xs text-cream-dark mt-1">
+              Operating hours: {operatingHours.startTime} - {operatingHours.endTime}
+            </p>
+          ) : (
+            <p className="text-xs text-cream-dark mt-1">Book up to 31 days in advance</p>
+          )}
         </div>
         
         {/* Time Selection */}
         <div>
-          <label className="block text-cream mb-2 font-poiret">Preferred Time</label>
-          <div className="grid grid-cols-4 gap-2">
-            {timeSlots.map(slot => (
-              <button
-                key={slot}
-                onClick={() => onTimeChange(slot)}
-                className={`p-2 rounded border transition-all ${
-                  time === slot
-                    ? 'bg-gold text-charcoal border-gold'
-                    : 'bg-charcoal border-gold-dark text-cream hover:bg-gold-dark hover:text-charcoal'
-                }`}
-              >
-                {slot}
-              </button>
-            ))}
-          </div>
+          <label className="block text-cream mb-2 font-poiret">Arrival Time</label>
+          {date ? (
+            timeSlots.length > 0 ? (
+              <div className="grid grid-cols-4 gap-2">
+                {timeSlots.map(slot => (
+                  <button
+                    key={slot}
+                    onClick={() => onTimeChange(slot)}
+                    className={`p-2 rounded border transition-all ${
+                      time === slot
+                        ? 'bg-gold text-charcoal border-gold'
+                        : 'bg-charcoal border-gold-dark text-cream hover:bg-gold-dark hover:text-charcoal'
+                    }`}
+                  >
+                    {slot}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-cream-dark">Please select a date first</p>
+            )
+          ) : (
+            <p className="text-cream-dark">Please select a date first</p>
+          )}
+          {time && (
+            <p className="text-xs text-gold mt-2">
+              ⚠️ Booking any time reserves the table for the entire night
+            </p>
+          )}
         </div>
         
         {/* Party Size */}

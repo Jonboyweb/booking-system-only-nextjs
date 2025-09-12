@@ -1,4 +1,5 @@
 import { Table, Booking } from './generated/prisma';
+import { isTimeWithinOperatingHours, getOperatingHours } from './operating-hours';
 
 /**
  * Validates if a booking date is within the allowed range (up to 31 days in advance)
@@ -51,7 +52,8 @@ export function canCombineTables(table1: Table, table2: Table): boolean {
 }
 
 /**
- * Gets all conflicting bookings for a given date/time
+ * Gets all conflicting bookings for a given date
+ * Since tables are booked for the entire night, ANY booking on that date conflicts
  */
 export function getConflictingBookings(
   bookings: Booking[],
@@ -82,13 +84,8 @@ export function getConflictingBookings(
       return false;
     }
     
-    // Check if same or overlapping time (within 2 hours)
-    const bookingHour = parseInt(booking.bookingTime.split(':')[0]);
-    const targetHour = parseInt(time.split(':')[0]);
-    const hourDiff = Math.abs(bookingHour - targetHour);
-    
-    // Consider bookings within 2 hours as conflicting
-    return hourDiff < 2 && ['PENDING', 'CONFIRMED'].includes(booking.status);
+    // ANY booking on the same date conflicts (table is booked for entire night)
+    return ['PENDING', 'CONFIRMED'].includes(booking.status);
   });
 }
 
@@ -115,6 +112,16 @@ export function validateBooking(
     errors.push('Bookings can only be made up to 31 days in advance');
   }
   
+  // Check if time is within operating hours
+  if (!isTimeWithinOperatingHours(date, time)) {
+    const operatingHours = getOperatingHours(date);
+    if (operatingHours.isSpecialEvent) {
+      errors.push(`${operatingHours.eventName}: Tables are available from ${operatingHours.startTime} to ${operatingHours.endTime}`);
+    } else {
+      errors.push(`Tables are only available from ${operatingHours.startTime} to ${operatingHours.endTime}`);
+    }
+  }
+  
   // Check party size fits table
   if (!isValidTableCapacity(table, partySize, combinedTable)) {
     if (combinedTable) {
@@ -124,17 +131,17 @@ export function validateBooking(
     }
   }
   
-  // Check for conflicts
+  // Check for conflicts - table is booked for entire night
   const conflicts = getConflictingBookings(existingBookings, date, time, table.id);
   if (conflicts.length > 0) {
-    errors.push('This table is already booked for the selected time');
+    errors.push('This table is already booked for the entire night');
   }
   
   // Check combined table conflicts if applicable
   if (combinedTable) {
     const combinedConflicts = getConflictingBookings(existingBookings, date, time, combinedTable.id);
     if (combinedConflicts.length > 0) {
-      errors.push('The combined table is already booked for the selected time');
+      errors.push('The combined table is already booked for the entire night');
     }
   }
   

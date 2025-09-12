@@ -78,11 +78,10 @@ export async function POST(request: Request) {
       );
     }
     
-    // Get all bookings for validation
+    // Get all bookings for validation (check entire day, not just specific time)
     const existingBookings = await prisma.booking.findMany({
       where: {
         bookingDate: bookingDate,
-        bookingTime: body.time,
         status: {
           in: ['PENDING', 'CONFIRMED']
         },
