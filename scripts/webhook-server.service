@@ -1,0 +1,53 @@
+[Unit]
+Description=GitHub Webhook Server for Booking System Auto-Deployment
+Documentation=https://github.com/Jonboyweb/booking-system-only-nextjs
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=cloudpanel
+Group=cloudpanel
+WorkingDirectory=/home/cloudpanel/htdocs/booking.yourdomain.com
+
+# Environment variables
+Environment="NODE_ENV=production"
+Environment="WEBHOOK_PORT=9001"
+EnvironmentFile=/home/cloudpanel/htdocs/booking.yourdomain.com/.env
+
+# Start command
+ExecStart=/usr/bin/node /home/cloudpanel/htdocs/booking.yourdomain.com/scripts/webhook-server.js
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=3
+
+# Process management
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/cloudpanel/htdocs/booking.yourdomain.com/logs
+ReadWritePaths=/home/cloudpanel/htdocs/booking.yourdomain.com/backups
+ReadWritePaths=/tmp
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=512
+MemoryLimit=500M
+CPUQuota=50%
+
+# Logging
+StandardOutput=append:/home/cloudpanel/htdocs/booking.yourdomain.com/logs/webhook-systemd.log
+StandardError=append:/home/cloudpanel/htdocs/booking.yourdomain.com/logs/webhook-systemd-error.log
+SyslogIdentifier=booking-webhook
+
+[Install]
+WantedBy=multi-user.target

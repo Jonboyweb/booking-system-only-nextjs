@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: backroom-postgres-prod
+    environment:
+      POSTGRES_USER: ${DB_USER:-backroom_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-backroom_bookings}
+      # Performance tuning
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=en_US.utf8 --lc-ctype=en_US.utf8"
+      SHARED_BUFFERS: "256MB"
+      EFFECTIVE_CACHE_SIZE: "1GB"
+      MAINTENANCE_WORK_MEM: "64MB"
+      CHECKPOINT_COMPLETION_TARGET: "0.9"
+      WAL_BUFFERS: "16MB"
+      DEFAULT_STATISTICS_TARGET: "100"
+      RANDOM_PAGE_COST: "1.1"
+      EFFECTIVE_IO_CONCURRENCY: "200"
+      WORK_MEM: "4MB"
+      MIN_WAL_SIZE: "1GB"
+      MAX_WAL_SIZE: "4GB"
+    ports:
+      # Only expose to localhost, not externally
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups/postgres:/backups
+      - ./scripts/postgres-init:/docker-entrypoint-initdb.d:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-backroom_user} -d ${DB_NAME:-backroom_bookings}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - booking-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Security: Drop unnecessary capabilities
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/cloudpanel/docker-volumes/postgres-data
+
+networks:
+  booking-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
