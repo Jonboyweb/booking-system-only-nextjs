@@ -4,7 +4,7 @@
 # This script is triggered by GitHub webhooks when changes are pushed to main branch
 
 # Configuration
-DEPLOY_DIR="/home/cloudpanel/htdocs/booking.yourdomain.com"
+DEPLOY_DIR="/home/door50a-br/htdocs/br.door50a.co.uk"
 LOG_DIR="$DEPLOY_DIR/logs"
 DEPLOY_LOG="$LOG_DIR/deploy.log"
 LOCK_FILE="/tmp/booking-system-deploy.lock"

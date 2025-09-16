@@ -6,17 +6,17 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=cloudpanel
-Group=cloudpanel
-WorkingDirectory=/home/cloudpanel/htdocs/booking.yourdomain.com
+User=door50a-br
+Group=door50a-br
+WorkingDirectory=/home/door50a-br/htdocs/br.door50a.co.uk
 
 # Environment variables
 Environment="NODE_ENV=production"
 Environment="WEBHOOK_PORT=9001"
-EnvironmentFile=/home/cloudpanel/htdocs/booking.yourdomain.com/.env
+EnvironmentFile=/home/door50a-br/htdocs/br.door50a.co.uk/.env
 
 # Start command
-ExecStart=/usr/bin/node /home/cloudpanel/htdocs/booking.yourdomain.com/scripts/webhook-server.js
+ExecStart=/usr/bin/node /home/door50a-br/htdocs/br.door50a.co.uk/scripts/webhook-server.js
 
 # Restart policy
 Restart=always
@@ -34,8 +34,8 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/home/cloudpanel/htdocs/booking.yourdomain.com/logs
-ReadWritePaths=/home/cloudpanel/htdocs/booking.yourdomain.com/backups
+ReadWritePaths=/home/door50a-br/htdocs/br.door50a.co.uk/logs
+ReadWritePaths=/home/door50a-br/htdocs/br.door50a.co.uk/backups
 ReadWritePaths=/tmp
 
 # Resource limits
@@ -45,8 +45,8 @@ MemoryLimit=500M
 CPUQuota=50%
 
 # Logging
-StandardOutput=append:/home/cloudpanel/htdocs/booking.yourdomain.com/logs/webhook-systemd.log
-StandardError=append:/home/cloudpanel/htdocs/booking.yourdomain.com/logs/webhook-systemd-error.log
+StandardOutput=append:/home/door50a-br/htdocs/br.door50a.co.uk/logs/webhook-systemd.log
+StandardError=append:/home/door50a-br/htdocs/br.door50a.co.uk/logs/webhook-systemd-error.log
 SyslogIdentifier=booking-webhook
 
 [Install]

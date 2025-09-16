@@ -4,7 +4,7 @@ module.exports = {
       name: 'booking-system',
       script: 'npm',
       args: 'start',
-      cwd: '/home/cloudpanel/htdocs/booking.yourdomain.com',
+      cwd: '/home/door50a-br/htdocs/br.door50a.co.uk',
       instances: 2, // Use 2 instances for load balancing
       exec_mode: 'cluster',
       autorestart: true,
@@ -30,7 +30,7 @@ module.exports = {
     {
       name: 'webhook-server',
       script: './scripts/webhook-server.js',
-      cwd: '/home/cloudpanel/htdocs/booking.yourdomain.com',
+      cwd: '/home/door50a-br/htdocs/br.door50a.co.uk',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
@@ -55,11 +55,11 @@ module.exports = {
   // Deployment configuration (optional - for PM2 deploy feature)
   deploy: {
     production: {
-      user: 'cloudpanel',
-      host: 'your-server-ip',
+      user: 'door50a-br',
+      host: '64.176.178.56',
       ref: 'origin/main',
       repo: 'git@github.com:Jonboyweb/booking-system-only-nextjs.git',
-      path: '/home/cloudpanel/htdocs/booking.yourdomain.com',
+      path: '/home/door50a-br/htdocs/br.door50a.co.uk',
       'pre-deploy-local': '',
       'post-deploy': 'npm ci --production=false && npx prisma generate && npx prisma migrate deploy && npm run build && pm2 reload ecosystem.config.prod.js --env production',
       'pre-setup': '',

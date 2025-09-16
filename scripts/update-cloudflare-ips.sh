@@ -8,8 +8,8 @@
 CLOUDFLARE_IPS_V4_URL="https://www.cloudflare.com/ips-v4"
 CLOUDFLARE_IPS_V6_URL="https://www.cloudflare.com/ips-v6"
 NGINX_CF_CONFIG="/etc/nginx/cloudflare-ips.conf"
-BACKUP_DIR="/home/cloudpanel/backups/cloudflare-ips"
-LOG_FILE="/home/cloudpanel/logs/cloudflare-ips-update.log"
+BACKUP_DIR="/home/door50a-br/backups/cloudflare-ips"
+LOG_FILE="/home/door50a-br/logs/cloudflare-ips-update.log"
 
 # Create necessary directories
 mkdir -p "$(dirname "$LOG_FILE")"
@@ -193,7 +193,7 @@ EOF
 # Function to set up cron job
 setup_cron() {
     CRON_FILE="/etc/cron.d/cloudflare-ips-update"
-    SCRIPT_PATH="/home/cloudpanel/scripts/update-cloudflare-ips.sh"
+    SCRIPT_PATH="/home/door50a-br/scripts/update-cloudflare-ips.sh"
     
     cat > "$CRON_FILE" << EOF
 # Update Cloudflare IPs daily at 6 AM

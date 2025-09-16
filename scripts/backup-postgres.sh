@@ -5,7 +5,7 @@
 # Can be run manually or via cron job
 
 # Configuration
-PROJECT_DIR="/home/cloudpanel/htdocs/booking.yourdomain.com"
+PROJECT_DIR="/home/door50a-br/htdocs/br.door50a.co.uk"
 BACKUP_DIR="$PROJECT_DIR/backups/postgres"
 DOCKER_COMPOSE_FILE="$PROJECT_DIR/docker-compose.prod.yml"
 LOG_FILE="$PROJECT_DIR/logs/backup.log"

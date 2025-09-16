@@ -71,7 +71,7 @@ ssh root@your-server-ip
 apt update && apt upgrade -y
 
 # Set timezone
-timedatectl set-timezone America/New_York  # Change to your timezone
+timedatectl set-timezone Europe/London  # Change to your timezone
 
 # Configure swap (recommended for 4GB RAM servers)
 fallocate -l 2G /swapfile
@@ -140,23 +140,23 @@ docker compose version
 
 ```bash
 # Create directory for Docker volumes
-mkdir -p /home/cloudpanel/docker-volumes/postgres-data
-chown -R cloudpanel:cloudpanel /home/cloudpanel/docker-volumes
+mkdir -p /home/door50a-br/docker-volumes/postgres-data
+chown -R door50a-br:door50a-br /home/door50a-br/docker-volumes
 
 # Create backup directory
-mkdir -p /home/cloudpanel/backups/postgres
-chown -R cloudpanel:cloudpanel /home/cloudpanel/backups
+mkdir -p /home/door50a-br/backups/postgres
+chown -R door50a-br:door50a-br /home/door50a-br/backups
 ```
 
 ### 3. Set Up PostgreSQL with Docker
 
 ```bash
 # Switch to cloudpanel user
-su - cloudpanel
+su - door50a
 
 # Create project directory (will be replaced later with git clone)
-mkdir -p ~/htdocs/booking.yourdomain.com
-cd ~/htdocs/booking.yourdomain.com
+mkdir -p ~/htdocs/br.door50a.co.uk
+cd ~/htdocs/br.door50a.co.uk
 
 # We'll deploy the docker-compose.prod.yml after cloning the repository
 ```
@@ -218,7 +218,7 @@ A       booking your-server-ip      Proxied (orange cloud)
 1. Log into CloudPanel
 2. Click **+ Add Site**
 3. Configure:
-   - **Domain Name**: booking.yourdomain.com
+   - **Domain Name**: br.door50a.co.uk
    - **Site Type**: Node.js
    - **Node.js Version**: 20.x (or latest LTS)
    - **App Port**: 3000
@@ -243,8 +243,8 @@ A       booking your-server-ip      Proxied (orange cloud)
 
 ```bash
 # Switch to cloudpanel user
-su - cloudpanel
-cd ~/htdocs/booking.yourdomain.com
+su - door50a-br
+cd ~/htdocs/br.door50a.co.uk
 
 # Remove default files
 rm -rf *
@@ -271,7 +271,7 @@ Update with your production values:
 ```env
 # Application
 NODE_ENV=production
-NEXT_PUBLIC_APP_URL=https://booking.yourdomain.com
+NEXT_PUBLIC_APP_URL=https://br.door50a.co.uk
 
 # Database (Docker PostgreSQL)
 DATABASE_URL="postgresql://backroom_user:your-secure-password@localhost:5432/backroom_bookings?schema=public"
@@ -343,7 +343,7 @@ pm2 start ecosystem.config.js --env production
 pm2 save
 
 # Set up PM2 to start on boot
-pm2 startup systemd -u cloudpanel --hp /home/cloudpanel
+pm2 startup systemd -u door50a-br --hp /home/door50a-br
 # Copy and run the command it outputs
 ```
 
@@ -364,7 +364,7 @@ pm2 save
 1. Go to your GitHub repository → **Settings** → **Webhooks**
 2. Click **Add webhook**
 3. Configure:
-   - **Payload URL**: `https://booking.yourdomain.com/github-webhook`
+   - **Payload URL**: `https://br.door50a.co.uk/github-webhook`
    - **Content type**: `application/json`
    - **Secret**: Your `GITHUB_WEBHOOK_SECRET` from `.env`
    - **Events**: Just the push event
@@ -519,18 +519,18 @@ docker compose -f docker-compose.prod.yml exec postgres psql -U backroom_user -d
 Create automated backup script:
 
 ```bash
-nano /home/cloudpanel/scripts/backup-postgres.sh
+nano /home/door50a-br/scripts/backup-postgres.sh
 ```
 
 ```bash
 #!/bin/bash
-BACKUP_DIR="/home/cloudpanel/backups/postgres"
+BACKUP_DIR="/home/door50a-br/backups/postgres"
 DATE=$(date +%Y%m%d-%H%M%S)
 DB_NAME="backroom_bookings"
 DB_USER="backroom_user"
 
 # Create backup
-docker compose -f /home/cloudpanel/htdocs/booking.yourdomain.com/docker-compose.prod.yml \
+docker compose -f /home/door50a-br/htdocs/br.door50a.co.uk/docker-compose.prod.yml \
   exec -T postgres pg_dump -U $DB_USER $DB_NAME | gzip > $BACKUP_DIR/backup-$DATE.sql.gz
 
 # Keep only last 7 days of backups
@@ -542,11 +542,11 @@ echo "[$(date)] Backup completed: backup-$DATE.sql.gz" >> $BACKUP_DIR/backup.log
 
 ```bash
 # Make executable
-chmod +x /home/cloudpanel/scripts/backup-postgres.sh
+chmod +x /home/door50a-br/scripts/backup-postgres.sh
 
 # Add to crontab (daily at 3 AM)
 crontab -e
-# Add: 0 3 * * * /home/cloudpanel/scripts/backup-postgres.sh
+# Add: 0 3 * * * /home/door50a-br/scripts/backup-postgres.sh
 ```
 
 ### 4. Log Rotation
@@ -557,7 +557,7 @@ sudo nano /etc/logrotate.d/booking-system
 ```
 
 ```
-/home/cloudpanel/htdocs/booking.yourdomain.com/logs/*.log {
+/home/door50a-br/htdocs/br.door50a.co.uk/logs/*.log {
     daily
     missingok
     rotate 14
@@ -622,7 +622,7 @@ netstat -tulpn | grep 3000
 pm2 logs webhook-server
 
 # Test webhook endpoint
-curl -X POST https://booking.yourdomain.com/github-webhook \
+curl -X POST https://br.door50a.co.uk/github-webhook \
   -H "Content-Type: application/json" \
   -H "X-GitHub-Event: ping" \
   -d '{"zen": "test"}'
@@ -638,7 +638,7 @@ curl -X POST https://booking.yourdomain.com/github-webhook \
 # Site → SSL/TLS → Check certificate status
 
 # Test SSL configuration
-curl -I https://booking.yourdomain.com
+curl -I https://br.door50a.co.uk
 
 # Check Cloudflare SSL mode
 # Should be "Full (strict)" in Cloudflare dashboard
