@@ -52,7 +52,8 @@ export async function POST(
       where: { id },
       include: {
         customer: true,
-        table: true
+        table: true,
+        drinkPackage: true
       }
     });
 
@@ -190,19 +191,41 @@ export async function POST(
 
     // Send refund confirmation email if requested
     if (sendEmail) {
-      // Trigger email send (async, don't wait)
-      fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/admin/bookings/${id}/send-refund-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': request.headers.get('cookie') || ''
-        },
-        body: JSON.stringify({
+      console.log('Attempting to send refund email...');
+      // Import and call the email function directly instead of using fetch
+      try {
+        const { sendRefundConfirmationEmail } = await import('@/src/lib/email/refund');
+        const emailSent = await sendRefundConfirmationEmail({
+          booking: {
+            ...booking,
+            email: booking.customer.email,
+            name: `${booking.customer.firstName} ${booking.customer.lastName}`,
+            phone: booking.customer.phone,
+            reference_number: booking.bookingReference,
+            table_name: `Table ${booking.table.tableNumber} - ${booking.table.floor.charAt(0).toUpperCase() + booking.table.floor.slice(1).toLowerCase()}`,
+            date: booking.bookingDate.toISOString().split('T')[0],
+            time: booking.bookingTime,
+            booking_time: booking.bookingTime,
+            party_size: booking.partySize,
+            drinks_package: booking.drinkPackage?.name,
+            specialRequests: booking.specialRequests || undefined,
+            depositAmount: Number(booking.depositAmount),
+            stripeIntentId: booking.stripeIntentId || undefined
+          },
           refundAmount: refundAmount / 100,
           refundId: refundResult.refundId,
-          reason: reason || 'Customer request'
-        })
-      }).catch(err => console.error('Failed to send refund email:', err));
+          reason: reason || 'Customer request',
+          refundDate: new Date()
+        });
+
+        if (emailSent) {
+          console.log(`Refund confirmation email sent for booking ${booking.bookingReference}`);
+        } else {
+          console.error('Failed to send refund confirmation email');
+        }
+      } catch (err) {
+        console.error('Error sending refund email:', err);
+      }
     }
 
     return NextResponse.json({
