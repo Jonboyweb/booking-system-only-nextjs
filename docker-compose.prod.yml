@@ -67,7 +67,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /home/cloudpanel/docker-volumes/postgres-data
+      device: /home/door50a-br/docker-volumes/postgres-data
 
 networks:
   booking-network:
