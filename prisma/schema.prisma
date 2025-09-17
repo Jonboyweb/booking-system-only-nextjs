@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
   output   = "../lib/generated/prisma"
@@ -11,35 +8,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Floor {
-  UPSTAIRS
-  DOWNSTAIRS
-}
-
-enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
-  COMPLETED
-  NO_SHOW
-}
-
 model Table {
-  id            String    @id @default(uuid())
-  tableNumber   Int       @unique
-  floor         Floor
-  capacityMin   Int
-  capacityMax   Int
-  description   String
-  features      String[]
-  isVip         Boolean   @default(false)
-  canCombineWith Int[]    @default([])
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  bookings      Booking[]
-  
+  id             String    @id @default(uuid())
+  tableNumber    Int       @unique
+  floor          Floor
+  capacityMin    Int
+  capacityMax    Int
+  description    String
+  features       String[]
+  isVip          Boolean   @default(false)
+  canCombineWith Int[]     @default([])
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  bookings       Booking[]
+
   @@map("tables")
 }
 
@@ -54,44 +37,42 @@ model Customer {
   notes            String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
-  
   bookings         Booking[]
-  
+
   @@map("customers")
 }
 
 model Booking {
-  id                String         @id @default(uuid())
-  bookingReference  String         @unique @default(cuid())
-  tableId           String
-  customerId        String
-  bookingDate       DateTime
-  bookingTime       String         // Store as HH:MM format
-  partySize         Int
-  status            BookingStatus  @default(PENDING)
-  depositAmount     Decimal        @default(50.00)
-  depositPaid       Boolean        @default(false)
-  stripePaymentId   String?
-  stripeIntentId    String?
-  paymentDate       DateTime?
-  depositRefunded   Boolean        @default(false)
-  refundDate        DateTime?
-  refundAmount      Int?
-  drinkPackageId    String?
-  specialRequests   String?
-  internalNotes     String?
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  
-  table             Table          @relation(fields: [tableId], references: [id])
-  customer          Customer       @relation(fields: [customerId], references: [id])
-  drinkPackage      DrinkPackage?  @relation(fields: [drinkPackageId], references: [id])
-  customOrder       CustomOrder?
-  spirits           BookingSpirit[]
-  champagnes        BookingChampagne[]
-  paymentLogs       PaymentLog[]
-  modifications     BookingModification[]
-  
+  id               String                @id @default(uuid())
+  bookingReference String                @unique @default(cuid())
+  tableId          String
+  customerId       String
+  bookingDate      DateTime
+  bookingTime      String
+  partySize        Int
+  status           BookingStatus         @default(PENDING)
+  depositAmount    Decimal               @default(50.00)
+  depositPaid      Boolean               @default(false)
+  stripePaymentId  String?
+  stripeIntentId   String?
+  drinkPackageId   String?
+  specialRequests  String?
+  internalNotes    String?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  depositRefunded  Boolean               @default(false)
+  paymentDate      DateTime?
+  refundAmount     Int?
+  refundDate       DateTime?
+  champagnes       BookingChampagne[]
+  modifications    BookingModification[]
+  spirits          BookingSpirit[]
+  customer         Customer              @relation(fields: [customerId], references: [id])
+  drinkPackage     DrinkPackage?         @relation(fields: [drinkPackageId], references: [id])
+  table            Table                 @relation(fields: [tableId], references: [id])
+  customOrder      CustomOrder?
+  paymentLogs      PaymentLog[]
+
   @@unique([tableId, bookingDate, bookingTime])
   @@index([bookingDate])
   @@index([status])
@@ -99,100 +80,92 @@ model Booking {
 }
 
 model DrinkPackage {
-  id           String    @id @default(uuid())
-  name         String    @unique
-  price        Decimal
-  description  String
-  includes     Json      // Store package contents as JSON
-  isActive     Boolean   @default(true)
-  sortOrder    Int       @default(0)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  
-  bookings     Booking[]
-  
-  @@map("drink_packages")
-}
-
-model CustomOrder {
   id          String    @id @default(uuid())
-  bookingId   String    @unique
-  items       Json      // Store selected bottles and quantities as JSON
-  totalPrice  Decimal
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  
-  @@map("custom_orders")
-}
-
-model Spirit {
-  id          String    @id @default(uuid())
-  category    String    // Vodka, Rum, Gin, etc.
-  brand       String
-  name        String
+  name        String    @unique
   price       Decimal
+  description String
+  includes    Json
   isActive    Boolean   @default(true)
   sortOrder   Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  
+  bookings    Booking[]
+
+  @@map("drink_packages")
+}
+
+model CustomOrder {
+  id         String   @id @default(uuid())
+  bookingId  String   @unique
+  items      Json
+  totalPrice Decimal
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("custom_orders")
+}
+
+model Spirit {
+  id             String          @id @default(uuid())
+  category       String
+  brand          String
+  name           String
+  price          Decimal
+  isActive       Boolean         @default(true)
+  sortOrder      Int             @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   bookingSpirits BookingSpirit[]
-  
+
   @@unique([category, brand, name])
   @@index([category])
   @@map("spirits")
 }
 
 model Champagne {
-  id          String    @id @default(uuid())
-  brand       String
-  name        String
-  price       Decimal
-  isActive    Boolean   @default(true)
-  sortOrder   Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
+  id                String             @id @default(uuid())
+  brand             String
+  name              String
+  price             Decimal
+  isActive          Boolean            @default(true)
+  sortOrder         Int                @default(0)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
   bookingChampagnes BookingChampagne[]
-  
+
   @@unique([brand, name])
   @@map("champagnes")
 }
 
-// Admin users for the management dashboard
 model AdminUser {
   id           String    @id @default(uuid())
   email        String    @unique
   name         String
   passwordHash String
-  role         String    @default("staff") // staff, manager, admin
+  role         String    @default("staff")
   isActive     Boolean   @default(true)
   lastLogin    DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  
+
   @@map("admin_users")
 }
 
-// Junction table for booking spirits
 model BookingSpirit {
-  id          String    @id @default(uuid())
-  bookingId   String
-  spiritId    String
-  quantity    Int       @default(1)
-  price       Decimal
-  createdAt   DateTime  @default(now())
-  
-  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  spirit      Spirit    @relation(fields: [spiritId], references: [id])
-  
+  id        String   @id @default(uuid())
+  bookingId String
+  spiritId  String
+  quantity  Int      @default(1)
+  price     Decimal
+  createdAt DateTime @default(now())
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  spirit    Spirit   @relation(fields: [spiritId], references: [id])
+
   @@unique([bookingId, spiritId])
   @@map("booking_spirits")
 }
 
-// Junction table for booking champagnes
 model BookingChampagne {
   id          String    @id @default(uuid())
   bookingId   String
@@ -200,46 +173,54 @@ model BookingChampagne {
   quantity    Int       @default(1)
   price       Decimal
   createdAt   DateTime  @default(now())
-  
   booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   champagne   Champagne @relation(fields: [champagneId], references: [id])
-  
+
   @@unique([bookingId, champagneId])
   @@map("booking_champagnes")
 }
 
-// Payment logs for tracking all payment events
 model PaymentLog {
-  id               String    @id @default(uuid())
-  bookingId        String
-  stripePaymentId  String
-  amount           Int       // Amount in pence
-  currency         String
-  status           String    // SUCCEEDED, FAILED, REFUNDED
-  errorMessage     String?
-  metadata         Json?
-  createdAt        DateTime  @default(now())
-  
-  booking          Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  
+  id              String   @id @default(uuid())
+  bookingId       String
+  stripePaymentId String
+  amount          Int
+  currency        String
+  status          String
+  errorMessage    String?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  booking         Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
   @@index([bookingId])
   @@index([stripePaymentId])
   @@map("payment_logs")
 }
 
-// Booking modification history for audit trail
 model BookingModification {
-  id           String    @id @default(uuid())
+  id           String   @id @default(uuid())
   bookingId    String
-  modifiedBy   String    // admin user email or ID
-  modifiedAt   DateTime  @default(now())
-  previousData Json      // Store old values as JSON
-  newData      Json      // Store new values as JSON
-  reason       String?   // Optional reason for modification
-  emailSent    Boolean   @default(false)
-  
-  booking      Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  
+  modifiedBy   String
+  modifiedAt   DateTime @default(now())
+  previousData Json
+  newData      Json
+  reason       String?
+  emailSent    Boolean  @default(false)
+  booking      Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
   @@index([bookingId])
   @@map("booking_modifications")
+}
+
+enum Floor {
+  UPSTAIRS
+  DOWNSTAIRS
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
 }
