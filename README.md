@@ -269,3 +269,4 @@ Built with ❤️ for The Backroom Leeds<!-- Deployment test -->
 <!-- Auto-deployment test after webhook configuration: Wed Sep 17 09:59:26 PM BST 2025 -->
 <\!-- Testing webhook connectivity: 2025-09-17 22:02:26 -->
 <\!-- Webhook test after binding fix: 2025-09-17 22:04:39 -->
+<\!-- Webhook test after Cloudflare configuration: 2025-09-17 22:19:20 -->
