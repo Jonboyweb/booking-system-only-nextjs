@@ -17,7 +17,7 @@ function getApiKey(): string | undefined {
 
 // Helper function to get from email
 function getFromEmail(): string {
-  return process.env.SENDGRID_FROM_EMAIL || 'noreply@thebackroomleeds.com';
+  return process.env.EMAIL_FROM || 'admin@backroomleeds.co.uk';
 }
 
 const FROM_NAME = 'The Backroom Leeds';

@@ -11,7 +11,7 @@
     "db:studio": "prisma studio",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
-    "pm2:start": "pm2 start ecosystem.config.prod.js",
+    "pm2:start": "pm2 start node_modules/next/dist/bin/next --name booking-system -- start",
     "pm2:stop": "pm2 stop booking-system",
     "pm2:restart": "pm2 restart booking-system",
     "pm2:reload": "pm2 reload booking-system",

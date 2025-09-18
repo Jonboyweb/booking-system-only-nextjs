@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Production deployment script for booking system with Docker PostgreSQL
-# This script is triggered by GitHub webhooks when changes are pushed to main branch
+# This script handles manual deployments when changes are pulled from GitHub
 
 # Configuration
 DEPLOY_DIR="/home/door50a-br/htdocs/br.door50a.co.uk"

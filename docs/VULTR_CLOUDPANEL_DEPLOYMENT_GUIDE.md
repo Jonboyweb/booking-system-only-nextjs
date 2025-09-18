@@ -8,7 +8,7 @@
 5. [Docker & PostgreSQL Setup](#docker--postgresql-setup)
 6. [Cloudflare Configuration](#cloudflare-configuration)
 7. [Application Deployment](#application-deployment)
-8. [GitHub Webhook Auto-Deployment](#github-webhook-auto-deployment)
+8. [Manual Deployment Updates](#manual-deployment-updates)
 9. [Security Configuration](#security-configuration)
 10. [Monitoring & Maintenance](#monitoring--maintenance)
 11. [Troubleshooting](#troubleshooting)
@@ -22,21 +22,20 @@ This guide covers deploying the booking system to a Vultr VPS using CloudPanel v
 - **CloudPanel v2**: Easy GUI management, automated SSL, built-in monitoring
 - **Docker PostgreSQL**: Isolated database environment, easy backups, consistent deployment
 - **Cloudflare CDN**: DDoS protection, SSL certificates, global CDN
-- **GitHub Webhooks**: Automatic deployment on push to main branch
+- **Manual Deployment**: Deploy updates via SSH when needed
 - **PM2**: Process management with clustering and auto-restart
 
 ## Architecture
 
 ```
 [GitHub Repository]
-        ↓ (webhook on push)
+        ↓ (manual pull)
 [Cloudflare CDN/Proxy]
         ↓ (Origin CA Certificate)
 [Vultr VPS Server]
    ├── CloudPanel (port 8443)
    ├── Node.js Application (port 3000)
    ├── Docker PostgreSQL (port 5432 - internal only)
-   ├── Webhook Server (port 9001)
    └── PM2 Process Manager
 ```
 
@@ -129,7 +128,7 @@ sh get-docker.sh
 apt install docker-compose-plugin -y
 
 # Add cloudpanel user to docker group
-usermod -aG docker cloudpanel
+usermod -aG docker door50a-br
 
 # Verify installation
 docker --version
@@ -152,7 +151,7 @@ chown -R door50a-br:door50a-br /home/door50a-br/backups
 
 ```bash
 # Switch to cloudpanel user
-su - door50a
+su - door50a-br
 
 # Create project directory (will be replaced later with git clone)
 mkdir -p ~/htdocs/br.door50a.co.uk
@@ -292,9 +291,9 @@ EMAIL_FROM_NAME="Your Restaurant Name"
 # JWT
 JWT_SECRET="generate-very-long-random-string-here"
 
-# GitHub Webhook
-GITHUB_WEBHOOK_SECRET="generate-webhook-secret-here"
-WEBHOOK_PORT=9001
+# GitHub Webhook (Not used - manual deployment)
+# GITHUB_WEBHOOK_SECRET="generate-webhook-secret-here"
+# WEBHOOK_PORT=9001
 ```
 
 ### 6. Start PostgreSQL Database
@@ -337,7 +336,7 @@ mkdir -p logs backups
 npm install -g pm2
 
 # Start the application
-pm2 start ecosystem.config.js --env production
+pm2 start ecosystem.config.prod.js
 
 # Save PM2 configuration
 pm2 save
@@ -347,64 +346,85 @@ pm2 startup systemd -u door50a-br --hp /home/door50a-br
 # Copy and run the command it outputs
 ```
 
-## GitHub Webhook Auto-Deployment
+## Manual Deployment Updates
 
-### 1. Start Webhook Server
+### Deploying Updates from GitHub
 
-```bash
-# Start webhook server with PM2
-pm2 start scripts/webhook-server.js --name webhook-server
-
-# Save configuration
-pm2 save
-```
-
-### 2. Configure GitHub Webhook
-
-1. Go to your GitHub repository → **Settings** → **Webhooks**
-2. Click **Add webhook**
-3. Configure:
-   - **Payload URL**: `https://br.door50a.co.uk/github-webhook`
-   - **Content type**: `application/json`
-   - **Secret**: Your `GITHUB_WEBHOOK_SECRET` from `.env`
-   - **Events**: Just the push event
-   - **Active**: ✓
-
-### 3. Set Up Nginx Proxy for Webhook
+When you need to deploy updates from your GitHub repository, follow these steps:
 
 ```bash
-# Create nginx configuration for webhook endpoint
-sudo nano /etc/nginx/sites-available/webhook
+# SSH into your server
+ssh door50a-br@64.176.178.56
+
+# Navigate to project directory
+cd /home/door50a-br/htdocs/br.door50a.co.uk
+
+# Pull latest changes from GitHub
+git pull origin main
+
+# Install any new dependencies
+npm ci --production=false
+
+# Run database migrations if needed
+npx prisma generate
+npx prisma migrate deploy
+
+# Build the application
+npm run build
+
+# Restart PM2
+pm2 restart booking-system
+
+# Check application status
+pm2 status
+pm2 logs booking-system --lines 50
 ```
 
-Add this configuration:
+### Creating a Deployment Script (Optional)
 
-```nginx
-location /github-webhook {
-    proxy_pass http://127.0.0.1:9001/webhook;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection 'upgrade';
-    proxy_set_header Host $host;
-    proxy_cache_bypass $http_upgrade;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-}
-```
-
-### 4. Test Webhook
+For convenience, create a deployment script:
 
 ```bash
-# Make a test commit
-echo "<!-- Deployment test -->" >> README.md
-git add README.md
-git commit -m "Test auto-deployment"
-git push origin main
+# Create deploy script
+nano ~/deploy.sh
+```
 
-# Monitor deployment
-pm2 logs webhook-server
-tail -f logs/deploy.log
+Add the following content:
+```bash
+#!/bin/bash
+set -e
+
+echo "Starting deployment..."
+cd /home/door50a-br/htdocs/br.door50a.co.uk
+
+echo "Pulling latest changes..."
+git pull origin main
+
+echo "Installing dependencies..."
+npm ci --production=false
+
+echo "Running database migrations..."
+npx prisma generate
+npx prisma migrate deploy
+
+echo "Building application..."
+npm run build
+
+echo "Restarting PM2..."
+pm2 restart booking-system
+
+echo "Deployment complete!"
+pm2 status
+```
+
+Make it executable:
+```bash
+chmod +x ~/deploy.sh
+```
+
+Now you can deploy with a single command:
+```bash
+./deploy.sh
 ```
 
 ## Security Configuration
@@ -615,20 +635,22 @@ pm2 restart booking-system
 netstat -tulpn | grep 3000
 ```
 
-#### Webhook Not Working
+#### Deployment Issues
 
 ```bash
-# Check webhook server logs
-pm2 logs webhook-server
+# Check application logs
+pm2 logs booking-system --lines 100
 
-# Test webhook endpoint
-curl -X POST https://br.door50a.co.uk/github-webhook \
-  -H "Content-Type: application/json" \
-  -H "X-GitHub-Event: ping" \
-  -d '{"zen": "test"}'
+# Check git status
+git status
+git log --oneline -5
 
-# Check GitHub webhook deliveries
-# GitHub repo → Settings → Webhooks → Recent Deliveries
+# Force rebuild if needed
+rm -rf .next
+npm run build
+
+# Check disk space
+df -h
 ```
 
 #### SSL Certificate Issues
@@ -691,9 +713,9 @@ swapon -s
 - [ ] PM2 startup configured
 
 ### Automation Setup
-- [ ] Webhook server running
-- [ ] GitHub webhook configured
-- [ ] Auto-deployment tested
+- [ ] Manual deployment script created
+- [ ] First manual deployment successful
+- [ ] Deployment process documented
 - [ ] Backup script created
 - [ ] Cron jobs configured
 
@@ -747,7 +769,7 @@ This setup provides a robust, production-ready deployment with:
 - ✅ Isolated PostgreSQL database with Docker
 - ✅ Cloudflare CDN and DDoS protection
 - ✅ Automatic SSL certificates
-- ✅ GitHub webhook auto-deployment
+- ✅ Manual deployment process
 - ✅ PM2 process management
 - ✅ Comprehensive security configuration
 - ✅ Automated backups and monitoring

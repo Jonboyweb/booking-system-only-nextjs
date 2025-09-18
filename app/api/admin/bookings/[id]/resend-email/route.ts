@@ -52,6 +52,7 @@ export async function POST(
       table_name: `Table ${booking.table.tableNumber} - ${booking.table.floor.charAt(0).toUpperCase() + booking.table.floor.slice(1).toLowerCase()}`,
       date: booking.bookingDate.toISOString(),
       time: booking.bookingTime,
+      booking_time: booking.bookingTime,  // Add this field for email template
       party_size: booking.partySize,
       drinks_package: booking.drinkPackage?.name || undefined,
       custom_spirits: booking.spirits.length > 0

@@ -14,7 +14,7 @@ function getApiKey(): string | undefined {
 
 // Helper function to get from email
 function getFromEmail(): string {
-  return process.env.SENDGRID_FROM_EMAIL || 'noreply@thebackroomleeds.com';
+  return process.env.EMAIL_FROM || process.env.SENDGRID_FROM_EMAIL || 'noreply@thebackroomleeds.com';
 }
 
 interface RefundEmailData {

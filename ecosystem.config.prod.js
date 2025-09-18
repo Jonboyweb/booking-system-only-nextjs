@@ -2,11 +2,11 @@ module.exports = {
   apps: [
     {
       name: 'booking-system',
-      script: 'npm',
+      script: 'node_modules/next/dist/bin/next',
       args: 'start',
       cwd: '/home/door50a-br/htdocs/br.door50a.co.uk',
-      instances: 2, // Use 2 instances for load balancing
-      exec_mode: 'cluster',
+      instances: 1, // Next.js handles its own worker processes
+      exec_mode: 'fork',
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
