@@ -17,7 +17,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 // Configuration
 const PORT = process.env.WEBHOOK_PORT || 9001;
 const SECRET = process.env.GITHUB_WEBHOOK_SECRET;
-const DEPLOY_SCRIPT = path.join(__dirname, 'deploy.sh');
+const DEPLOY_SCRIPT = path.join(__dirname, 'deploy-prod.sh');
 const LOG_FILE = path.join(__dirname, '..', 'logs', 'webhook.log');
 
 // Ensure logs directory exists
@@ -176,9 +176,9 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, '127.0.0.1', () => {
     log(`GitHub webhook server started on port ${PORT}`);
-    log(`Webhook endpoint: http://localhost:${PORT}/webhook`);
-    log(`Health check: http://localhost:${PORT}/health`);
-    
+    log(`Webhook endpoint: http://127.0.0.1:${PORT}/webhook`);
+    log(`Health check: http://127.0.0.1:${PORT}/health`);
+
     if (!SECRET) {
         log('WARNING: Running without webhook secret. Set GITHUB_WEBHOOK_SECRET for production.', 'WARN');
     }
