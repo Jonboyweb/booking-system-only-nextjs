@@ -135,10 +135,115 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 JWT_SECRET="your-secret-key"
 ```
 
+## Production Deployment
+
+### VPS Requirements
+- Ubuntu 20.04+ or similar Linux distribution
+- Node.js 20+ and npm
+- PM2 process manager (`npm install -g pm2`)
+- Docker and Docker Compose for PostgreSQL
+- Nginx for reverse proxy (optional, if using CloudPanel)
+- 2GB+ RAM, 20GB+ storage
+
+### Manual Deployment Process
+
+1. **Initial Setup on Fresh VPS**
+```bash
+# Clone repository
+git clone https://github.com/Jonboyweb/booking-system-only-nextjs.git
+cd booking-system-only-nextjs
+
+# Copy and configure environment variables
+cp .env.example .env
+nano .env  # Add production values
+
+# Install dependencies
+npm ci --production=false
+
+# Setup PostgreSQL with Docker
+docker-compose -f docker-compose.prod.yml up -d
+
+# Generate Prisma client and run migrations
+npx prisma generate
+npx prisma migrate deploy
+
+# Build production application
+npm run build
+
+# Start with PM2
+pm2 start ecosystem.config.prod.js --env production
+pm2 save
+pm2 startup  # Follow instructions to enable auto-start
+```
+
+2. **Manual Updates (without webhooks)**
+```bash
+# Pull latest changes
+git pull origin main
+
+# Run deployment script
+./scripts/deploy-prod.sh
+```
+
+The deployment script handles:
+- Installing/updating dependencies
+- Running database migrations
+- Building the production bundle
+- Restarting PM2 processes gracefully
+
+### PM2 Configuration
+
+**Production** (`ecosystem.config.prod.js`):
+- Main app: 2 instances in cluster mode
+- Port: 3000
+- Auto-restart on failure
+- Memory limit: 1GB
+- Logs: `./logs/pm2-*.log`
+
+**Home Server** (`ecosystem.config.eq6.js`):
+- Single instance in fork mode
+- Adjusted paths for home environment
+
+Note: GitHub webhook server has been removed from PM2 configs. Manual deployment is now required.
+
+### Environment Variables for Production
+
+```env
+# Database
+DATABASE_URL="postgresql://backroom_user:password@localhost:5432/backroom_bookings"
+
+# Stripe
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_live_..."
+STRIPE_SECRET_KEY="sk_live_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+
+# SendGrid
+SENDGRID_API_KEY="SG...."
+SENDGRID_FROM_EMAIL="admin@backroomleeds.co.uk"
+
+# App
+NEXT_PUBLIC_APP_URL="https://br.door50a.co.uk"
+JWT_SECRET="strong-random-secret"
+NODE_ENV="production"
+```
+
+### Security Considerations
+
+1. **Cloudflare Proxy**: Keep enabled for DDoS protection and SSL
+2. **Firewall**: Only expose ports 80/443, keep database internal
+3. **Secrets**: Never commit `.env` files, use strong JWT secrets
+4. **Updates**: Regularly update dependencies with `npm audit`
+5. **Backups**: Automated database backups in `/backups/`
+
+### Monitoring
+
+- PM2 status: `pm2 status`
+- PM2 logs: `pm2 logs booking-system`
+- Application logs: `tail -f logs/*.log`
+- Database: `docker-compose -f docker-compose.prod.yml logs -f`
+
 ## Current Development Status
 
-Project is 78% complete (Phase 7 of 9 completed). Remaining phases:
-- Phase 8: Mobile Optimization & Testing
-- Phase 9: Final Polish & Deployment
+Project is production-ready and actively deployed. Manual deployment process is in place for security.
 
-The development server runs on port 3000 with PostgreSQL on port 5432 via Docker.
+The production server runs on port 3000 with PostgreSQL on port 5432 via Docker.
