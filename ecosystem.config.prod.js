@@ -26,29 +26,6 @@ module.exports = {
       min_uptime: '10s',
       max_restarts: 10,
       restart_delay: 4000
-    },
-    {
-      name: 'webhook-server',
-      script: './scripts/webhook-server.js',
-      cwd: '/home/door50a-br/htdocs/br.door50a.co.uk',
-      instances: 1,
-      exec_mode: 'fork',
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '500M',
-      env: {
-        NODE_ENV: 'production',
-        WEBHOOK_PORT: 9001
-      },
-      error_file: './logs/webhook-error.log',
-      out_file: './logs/webhook-out.log',
-      log_file: './logs/webhook-combined.log',
-      time: true,
-      merge_logs: true,
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      min_uptime: '10s',
-      max_restarts: 10,
-      restart_delay: 4000
     }
   ],
 
