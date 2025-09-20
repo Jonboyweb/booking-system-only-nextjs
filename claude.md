@@ -143,88 +143,163 @@ JWT_SECRET="your-secret-key"
 - PM2 process manager (`npm install -g pm2`)
 - Docker and Docker Compose for PostgreSQL
 - Nginx for reverse proxy (optional, if using CloudPanel)
-- 2GB+ RAM, 20GB+ storage
+- 2GB+ RAM minimum, 4GB+ recommended
+- 20GB+ storage
 
-### Manual Deployment Process
+### Initial Production Setup
 
-1. **Initial Setup on Fresh VPS**
+1. **Server Preparation**
+```bash
+# Update system packages
+sudo apt update && sudo apt upgrade -y
+
+# Install Node.js 20+
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Install PM2 globally
+sudo npm install -g pm2
+
+# Install Docker
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER
+newgrp docker
+
+# Install Docker Compose
+sudo apt install docker-compose -y
+```
+
+2. **Clone and Configure Application**
 ```bash
 # Clone repository
 git clone https://github.com/Jonboyweb/booking-system-only-nextjs.git
 cd booking-system-only-nextjs
 
 # Copy and configure environment variables
-cp .env.example .env
-nano .env  # Add production values
+cp .env.production.example .env
+nano .env  # Add your production values (see Environment Variables section)
+
+# Create necessary directories
+mkdir -p logs backups/postgres docker-volumes/postgres-data
+```
+
+3. **Database Setup**
+```bash
+# Start PostgreSQL with Docker
+docker-compose -f docker-compose.prod.yml up -d
+
+# Wait for database to be ready
+docker-compose -f docker-compose.prod.yml exec postgres pg_isready
 
 # Install dependencies
 npm ci --production=false
 
-# Setup PostgreSQL with Docker
-docker-compose -f docker-compose.prod.yml up -d
-
-# Generate Prisma client and run migrations
+# Generate Prisma client
 npx prisma generate
+
+# Run database migrations
 npx prisma migrate deploy
 
-# Build production application
+# Seed initial admin user
+npx tsx scripts/seed-admin.ts
+```
+
+4. **Build and Start Application**
+```bash
+# Build production bundle
 npm run build
 
 # Start with PM2
 pm2 start ecosystem.config.prod.js --env production
+
+# Save PM2 process list
 pm2 save
-pm2 startup  # Follow instructions to enable auto-start
+
+# Generate startup script
+pm2 startup systemd
+# Follow the instructions printed to enable auto-start on boot
 ```
 
-2. **Manual Updates (without webhooks)**
+5. **Verify Deployment**
 ```bash
+# Check application status
+pm2 status
+
+# View logs
+pm2 logs booking-system --lines 50
+
+# Test application endpoint
+curl http://localhost:3000/api/health
+```
+
+### Manual Updates (Production)
+
+For security reasons, this project uses manual deployment without GitHub webhooks:
+
+```bash
+# Navigate to project directory
+cd /home/door50a-br/htdocs/br.door50a.co.uk  # Adjust path as needed
+
 # Pull latest changes
 git pull origin main
 
-# Run deployment script
+# Run production deployment script
 ./scripts/deploy-prod.sh
 ```
 
-The deployment script handles:
-- Installing/updating dependencies
-- Running database migrations
-- Building the production bundle
-- Restarting PM2 processes gracefully
+The `deploy-prod.sh` script automatically:
+- Creates database and build backups
+- Checks Docker/PostgreSQL health
+- Installs/updates dependencies if needed
+- Runs database migrations if schema changed
+- Rebuilds the application
+- Performs zero-downtime PM2 reload
+- Runs health checks
+- Provides rollback on failure
 
-### PM2 Configuration
+### Production PM2 Configuration
 
 **Production** (`ecosystem.config.prod.js`):
-- Main app: 2 instances in cluster mode
+- App name: `booking-system`
+- Instances: 1 (Next.js handles internal workers)
+- Mode: Fork mode
 - Port: 3000
-- Auto-restart on failure
+- Auto-restart: Enabled
 - Memory limit: 1GB
 - Logs: `./logs/pm2-*.log`
+- Graceful reload with 5s timeout
 
-**Home Server** (`ecosystem.config.eq6.js`):
-- Single instance in fork mode
-- Adjusted paths for home environment
+### Production Environment Variables
 
-Note: GitHub webhook server has been removed from PM2 configs. Manual deployment is now required.
-
-### Environment Variables for Production
+Copy `.env.production.example` to `.env` and configure:
 
 ```env
-# Database
-DATABASE_URL="postgresql://backroom_user:password@localhost:5432/backroom_bookings"
+# Database (must match docker-compose.prod.yml)
+DATABASE_URL="postgresql://backroom_user:STRONG_PASSWORD@localhost:5432/backroom_bookings"
+DB_USER=backroom_user
+DB_PASSWORD=STRONG_PASSWORD
+DB_NAME=backroom_bookings
 
-# Stripe
+# Stripe (get from https://dashboard.stripe.com)
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_live_..."
 STRIPE_SECRET_KEY="sk_live_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
 
-# SendGrid
+# SendGrid (get from https://app.sendgrid.com)
 SENDGRID_API_KEY="SG...."
-SENDGRID_FROM_EMAIL="admin@backroomleeds.co.uk"
+EMAIL_FROM="admin@backroomleeds.co.uk"
+EMAIL_FROM_NAME="The Backroom Leeds"
 
-# App
+# Application
 NEXT_PUBLIC_APP_URL="https://br.door50a.co.uk"
-JWT_SECRET="strong-random-secret"
+JWT_SECRET="$(openssl rand -base64 64)"  # Generate this!
 NODE_ENV="production"
+
+# Business Settings
+RESTAURANT_NAME="The Backroom Leeds"
+RESTAURANT_PHONE="+441234567890"
+RESTAURANT_ADDRESS="123 Main St, Leeds"
+TIMEZONE="Europe/London"
 ```
 
 ### Security Considerations
@@ -234,16 +309,229 @@ NODE_ENV="production"
 3. **Secrets**: Never commit `.env` files, use strong JWT secrets
 4. **Updates**: Regularly update dependencies with `npm audit`
 5. **Backups**: Automated database backups in `/backups/`
+6. **Manual Deployment**: No webhook exposure for enhanced security
 
-### Monitoring
+### Production Monitoring
 
-- PM2 status: `pm2 status`
-- PM2 logs: `pm2 logs booking-system`
-- Application logs: `tail -f logs/*.log`
-- Database: `docker-compose -f docker-compose.prod.yml logs -f`
+```bash
+# PM2 monitoring
+pm2 status                          # View process status
+pm2 monit                          # Interactive monitoring
+pm2 logs booking-system --lines 100  # View recent logs
+pm2 info booking-system            # Detailed process info
+
+# Database monitoring
+docker-compose -f docker-compose.prod.yml ps     # Container status
+docker-compose -f docker-compose.prod.yml logs -f postgres  # Database logs
+
+# Application health
+curl http://localhost:3000/api/health  # Health check endpoint
+
+# Resource usage
+pm2 describe booking-system | grep -E "memory|cpu"  # PM2 metrics
+docker stats backroom-postgres-prod  # Database resources
+```
+
+### Backup & Recovery
+
+```bash
+# Manual database backup
+./scripts/backup-postgres.sh
+
+# Restore database from backup
+docker-compose -f docker-compose.prod.yml exec -T postgres \
+  psql -U backroom_user backroom_bookings < backups/postgres/backup.sql
+
+# Application rollback
+git log --oneline -n 5  # View recent commits
+git reset --hard <commit-hash>  # Rollback to specific commit
+npm ci --production=false && npm run build
+pm2 reload booking-system
+```
+
+## Development Environment
+
+### Local Development Setup
+
+1. **Prerequisites**
+- Node.js 20+
+- Docker Desktop
+- Git
+- VS Code (recommended)
+
+2. **Initial Setup**
+```bash
+# Clone repository
+git clone https://github.com/Jonboyweb/booking-system-only-nextjs.git
+cd booking-system-only-nextjs
+
+# Copy development environment variables
+cp .env.development.example .env.local
+nano .env.local  # Configure for local development
+
+# Install dependencies
+npm install
+
+# Start PostgreSQL (development mode)
+docker-compose -f docker-compose.dev.yml up -d
+
+# Setup database
+npx prisma generate
+npx prisma migrate dev
+npx prisma db seed
+npx tsx scripts/seed-admin.ts
+
+# Start development server
+npm run dev
+```
+
+3. **Development Commands**
+```bash
+# Start dev server with hot reload
+npm run dev
+
+# Open Prisma Studio (database GUI)
+npm run db:studio
+
+# Run database migrations
+npm run db:migrate
+
+# Check database connection
+npm run db:check
+
+# Run linter
+npm run lint
+
+# Build for testing
+npm run build
+npm run start  # Test production build locally
+```
+
+### Development Deployment
+
+For staging/development servers:
+
+```bash
+# Navigate to development directory
+cd /home/cdev/booking-system-only-nextjs  # Adjust path
+
+# Pull latest changes
+git pull origin main  # or development branch
+
+# Run development deployment
+./scripts/deploy-dev.sh
+```
+
+The `deploy-dev.sh` script:
+- Skips production optimizations
+- Uses development Docker configuration
+- Enables debug logging
+- Faster rebuild times
+- No backup creation (optional)
+
+### Development PM2 Configuration
+
+**Development** (`ecosystem.config.dev.js`):
+- Single instance
+- Development environment variables
+- Verbose logging
+- File watching enabled (optional)
+- Port: 3000 or 3001
+
+### Testing Stripe Webhooks Locally
+
+```bash
+# Install Stripe CLI
+curl -fsSL https://packages.stripe.dev/api/security/keypair | gpg --dearmor | sudo tee /usr/share/keyrings/stripe.gpg
+echo "deb [signed-by=/usr/share/keyrings/stripe.gpg] https://packages.stripe.dev/stripe-cli-debian-local stable main" | sudo tee /etc/apt/sources.list.d/stripe.list
+sudo apt update && sudo apt install stripe
+
+# Login to Stripe
+stripe login
+
+# Forward webhooks to local server
+stripe listen --forward-to localhost:3000/api/payment/webhook
+
+# In another terminal, trigger test events
+stripe trigger payment_intent.succeeded
+```
+
+### Development Tips
+
+1. **Hot Reload**: Next.js dev server automatically reloads on file changes
+2. **Database GUI**: Use `npm run db:studio` for visual database management
+3. **Email Testing**: Use SendGrid sandbox mode or MailHog for local testing
+4. **Stripe Testing**: Use test mode keys and test card numbers
+5. **Debug Mode**: Set `LOG_LEVEL=debug` in `.env.local`
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+1. **Database Connection Failed**
+```bash
+# Check Docker container
+docker ps | grep postgres
+# Restart if needed
+docker-compose -f docker-compose.prod.yml restart postgres
+# Check logs
+docker-compose -f docker-compose.prod.yml logs postgres
+```
+
+2. **Build Failures**
+```bash
+# Clear Next.js cache
+rm -rf .next
+# Clear node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm ci --production=false
+# Rebuild
+npm run build
+```
+
+3. **PM2 Process Not Starting**
+```bash
+# Check PM2 logs
+pm2 logs booking-system --err
+# Delete and restart
+pm2 delete booking-system
+pm2 start ecosystem.config.prod.js --env production
+```
+
+4. **Port Already in Use**
+```bash
+# Find process using port 3000
+sudo lsof -i :3000
+# Kill the process
+sudo kill -9 <PID>
+```
+
+5. **Prisma Migration Issues**
+```bash
+# Reset database (CAUTION: Data loss!)
+npx prisma migrate reset
+# Or manually fix
+npx prisma migrate status
+npx prisma migrate resolve --applied <migration_name>
+```
+
+6. **Stripe Webhook Failures**
+- Verify webhook secret matches dashboard
+- Check webhook endpoint URL
+- Ensure proper SSL certificate
+- Review Stripe dashboard webhook logs
+
+7. **Email Not Sending**
+- Verify SendGrid API key
+- Check sender domain verification
+- Review SendGrid activity feed
+- Test with `npx tsx scripts/test-email.ts`
 
 ## Current Development Status
 
-Project is production-ready and actively deployed. Manual deployment process is in place for security.
+Project is production-ready and actively deployed. Manual deployment process is in place for enhanced security (no GitHub webhooks).
 
-The production server runs on port 3000 with PostgreSQL on port 5432 via Docker.
+- **Production**: Port 3000 (Next.js) + Port 5432 (PostgreSQL via Docker)
+- **Development**: Same ports, simplified configuration
+- **Deployment**: Manual via SSH and deployment scripts
+- **Process Manager**: PM2 for production stability

@@ -1,0 +1,73 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: backroom-postgres-dev
+    environment:
+      POSTGRES_USER: ${DB_USER:-backroom_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-development_password_2024}
+      POSTGRES_DB: ${DB_NAME:-backroom_bookings_dev}
+      # Development optimizations - less aggressive than production
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+      SHARED_BUFFERS: "128MB"
+      EFFECTIVE_CACHE_SIZE: "512MB"
+      WORK_MEM: "4MB"
+    ports:
+      # Expose to localhost for development tools
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./backups/postgres:/backups
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-backroom_user} -d ${DB_NAME:-backroom_bookings_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - booking-dev-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Optional: Mailhog for local email testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: backroom-mailhog
+    ports:
+      - "1025:1025"  # SMTP port
+      - "8025:8025"  # Web UI
+    networks:
+      - booking-dev-network
+    restart: unless-stopped
+
+  # Optional: pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: backroom-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@localhost.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - booking-dev-network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  booking-dev-network:
+    driver: bridge

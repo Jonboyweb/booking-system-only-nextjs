@@ -2,15 +2,34 @@
 
 # Production deployment script for booking system with Docker PostgreSQL
 # This script handles manual deployments when changes are pulled from GitHub
+# Usage: ./scripts/deploy-prod.sh [--skip-backup] [--force]
 
 # Configuration
-DEPLOY_DIR="/home/door50a-br/htdocs/br.door50a.co.uk"
+DEPLOY_DIR="${DEPLOY_DIR:-/home/door50a-br/htdocs/br.door50a.co.uk}"
 LOG_DIR="$DEPLOY_DIR/logs"
 DEPLOY_LOG="$LOG_DIR/deploy.log"
 LOCK_FILE="/tmp/booking-system-deploy.lock"
 BACKUP_DIR="$DEPLOY_DIR/backups"
 PM2_APP_NAME="booking-system"
 DOCKER_COMPOSE_FILE="docker-compose.prod.yml"
+SKIP_BACKUP=false
+FORCE_DEPLOY=false
+
+# Parse command line arguments
+for arg in "$@"; do
+    case $arg in
+        --skip-backup)
+            SKIP_BACKUP=true
+            shift
+            ;;
+        --force)
+            FORCE_DEPLOY=true
+            shift
+            ;;
+        *)
+            ;;
+    esac
+done
 
 # Colors for output
 RED='\033[0;31m'
@@ -43,9 +62,15 @@ remove_lock() {
 
 # Function to backup database
 backup_database() {
+    if [ "$SKIP_BACKUP" = true ]; then
+        log_message "Skipping database backup (--skip-backup flag)"
+        return 0
+    fi
+
     log_message "Creating database backup..."
+    mkdir -p "$BACKUP_DIR/postgres"
     BACKUP_NAME="db-backup-$(date +%Y%m%d-%H%M%S).sql.gz"
-    
+
     docker compose -f "$DEPLOY_DIR/$DOCKER_COMPOSE_FILE" exec -T postgres \
         pg_dump -U "${DB_USER:-backroom_user}" "${DB_NAME:-backroom_bookings}" | \
         gzip > "$BACKUP_DIR/postgres/$BACKUP_NAME" 2>/dev/null && {
@@ -145,10 +170,12 @@ main() {
     # Check if there are new changes
     LOCAL_COMMIT=$(git rev-parse HEAD)
     REMOTE_COMMIT=$(git rev-parse origin/main)
-    
-    if [ "$LOCAL_COMMIT" = "$REMOTE_COMMIT" ]; then
-        log_message "Already up to date. No deployment needed."
+
+    if [ "$LOCAL_COMMIT" = "$REMOTE_COMMIT" ] && [ "$FORCE_DEPLOY" = false ]; then
+        log_message "Already up to date. No deployment needed. Use --force to deploy anyway."
         exit 0
+    elif [ "$FORCE_DEPLOY" = true ]; then
+        log_message "Force deployment requested, proceeding regardless of changes..."
     fi
     
     # Pull latest changes
