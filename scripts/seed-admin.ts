@@ -1,15 +1,14 @@
 #!/usr/bin/env npx tsx
-import { PrismaClient } from '../lib/generated/prisma';
+import { db } from '../lib/db';
 import { hashPassword } from '../src/lib/auth/password';
 
-const prisma = new PrismaClient();
 
 async function seedAdminUser() {
   console.log('Seeding default admin user...');
 
   try {
     // Check if admin already exists
-    const existingAdmin = await prisma.adminUser.findUnique({
+    const existingAdmin = await db.adminUser.findUnique({
       where: { email: 'admin@backroomleeds.co.uk' }
     });
 
@@ -21,7 +20,7 @@ async function seedAdminUser() {
     // Create default admin user
     const passwordHash = await hashPassword('admin123');
     
-    const adminUser = await prisma.adminUser.create({
+    const adminUser = await db.adminUser.create({
       data: {
         email: 'admin@backroomleeds.co.uk',
         name: 'Admin',
@@ -39,7 +38,7 @@ async function seedAdminUser() {
   } catch (error) {
     console.error('Error seeding admin user:', error);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

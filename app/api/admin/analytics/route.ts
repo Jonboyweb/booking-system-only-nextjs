@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/lib/generated/prisma';
+import { db } from '@/lib/db';
 import { getAuthUser } from '@/src/middleware/auth';
-
-const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   // Check authentication
@@ -45,7 +43,7 @@ export async function GET(request: NextRequest) {
     monthStart.setDate(now.getDate() - 30);
 
     const [todayRevenue, weekRevenue, monthRevenue, totalRevenue] = await Promise.all([
-      prisma.booking.aggregate({
+      db.booking.aggregate({
         where: {
           bookingDate: { gte: todayStart },
           status: 'CONFIRMED',
@@ -53,7 +51,7 @@ export async function GET(request: NextRequest) {
         },
         _sum: { depositAmount: true }
       }),
-      prisma.booking.aggregate({
+      db.booking.aggregate({
         where: {
           bookingDate: { gte: weekStart },
           status: 'CONFIRMED',
@@ -61,7 +59,7 @@ export async function GET(request: NextRequest) {
         },
         _sum: { depositAmount: true }
       }),
-      prisma.booking.aggregate({
+      db.booking.aggregate({
         where: {
           bookingDate: { gte: monthStart },
           status: 'CONFIRMED',
@@ -69,7 +67,7 @@ export async function GET(request: NextRequest) {
         },
         _sum: { depositAmount: true }
       }),
-      prisma.booking.aggregate({
+      db.booking.aggregate({
         where: {
           status: 'CONFIRMED',
           depositPaid: true
@@ -80,15 +78,15 @@ export async function GET(request: NextRequest) {
 
     // Booking status counts
     const [total, confirmed, pending, cancelled, noShow] = await Promise.all([
-      prisma.booking.count({ where: { bookingDate: { gte: startDate } } }),
-      prisma.booking.count({ where: { bookingDate: { gte: startDate }, status: 'CONFIRMED' } }),
-      prisma.booking.count({ where: { bookingDate: { gte: startDate }, status: 'PENDING' } }),
-      prisma.booking.count({ where: { bookingDate: { gte: startDate }, status: 'CANCELLED' } }),
-      prisma.booking.count({ where: { bookingDate: { gte: startDate }, status: 'NO_SHOW' } })
+      db.booking.count({ where: { bookingDate: { gte: startDate } } }),
+      db.booking.count({ where: { bookingDate: { gte: startDate }, status: 'CONFIRMED' } }),
+      db.booking.count({ where: { bookingDate: { gte: startDate }, status: 'PENDING' } }),
+      db.booking.count({ where: { bookingDate: { gte: startDate }, status: 'CANCELLED' } }),
+      db.booking.count({ where: { bookingDate: { gte: startDate }, status: 'NO_SHOW' } })
     ]);
 
     // Table performance
-    const tableBookings = await prisma.booking.groupBy({
+    const tableBookings = await db.booking.groupBy({
       by: ['tableId'],
       where: {
         bookingDate: { gte: startDate },
@@ -100,7 +98,7 @@ export async function GET(request: NextRequest) {
 
     const tables = await Promise.all(
       tableBookings.map(async (tb) => {
-        const table = await prisma.table.findUnique({
+        const table = await db.table.findUnique({
           where: { id: tb.tableId }
         });
         return {
@@ -113,7 +111,7 @@ export async function GET(request: NextRequest) {
     );
 
     // Package performance
-    const packageBookings = await prisma.booking.groupBy({
+    const packageBookings = await db.booking.groupBy({
       by: ['drinkPackageId'],
       where: {
         bookingDate: { gte: startDate },
@@ -126,7 +124,7 @@ export async function GET(request: NextRequest) {
     const packages = await Promise.all(
       packageBookings.map(async (pb) => {
         if (!pb.drinkPackageId) return null;
-        const pkg = await prisma.drinkPackage.findUnique({
+        const pkg = await db.drinkPackage.findUnique({
           where: { id: pb.drinkPackageId }
         });
         return {
@@ -138,7 +136,7 @@ export async function GET(request: NextRequest) {
     );
 
     // Peak times
-    const timeBookings = await prisma.booking.groupBy({
+    const timeBookings = await db.booking.groupBy({
       by: ['bookingTime'],
       where: {
         bookingDate: { gte: startDate }
@@ -156,7 +154,7 @@ export async function GET(request: NextRequest) {
     }));
 
     // Daily bookings for chart
-    const bookings = await prisma.booking.findMany({
+    const bookings = await db.booking.findMany({
       where: {
         bookingDate: { gte: startDate }
       },

@@ -6,11 +6,10 @@ import * as path from 'path';
 // Load environment variables
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-import { PrismaClient } from '../lib/generated/prisma';
+import { db } from '../lib/db';
 import sgMail from '@sendgrid/mail';
 import { generateRefundConfirmationEmail } from '../src/lib/email/templates/refund-confirmation';
 
-const prisma = new PrismaClient();
 
 // Helper function to get and validate API key
 function getApiKey(): string | undefined {
@@ -104,7 +103,7 @@ async function testRefundEmail() {
     }
   }
 
-  await prisma.$disconnect();
+  await db.$disconnect();
 }
 
 // Run the test

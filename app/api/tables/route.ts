@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/db';
 
 export async function GET() {
   try {
-    const tables = await prisma.table.findMany({
+    const tables = await db.table.findMany({
       orderBy: {
         tableNumber: 'asc'
       }

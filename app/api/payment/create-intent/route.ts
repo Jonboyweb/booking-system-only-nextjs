@@ -1,21 +1,39 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { stripe, DEPOSIT_AMOUNT } from '@/lib/stripe';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/db';
+import { checkRateLimit, applyRateLimitHeaders, RateLimitConfigs } from '@/lib/rate-limit';
+import { withCORS } from '@/lib/cors';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting for payment intent creation
+    const rateLimitResult = await checkRateLimit(request, 'payment-intent', RateLimitConfigs.paymentIntent);
+
+    if (!rateLimitResult.success) {
+      const response = NextResponse.json(
+        {
+          success: false,
+          error: 'Too many payment attempts. Please try again later.',
+          retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+        },
+        { status: 429 }
+      );
+      return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
+    }
+
     const body = await request.json();
     const { bookingId, customerEmail } = body;
 
     if (!bookingId) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: 'Booking ID is required' },
         { status: 400 }
       );
+      return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
     }
 
     // Verify booking exists and hasn't been paid
-    const booking = await prisma.booking.findUnique({
+    const booking = await db.booking.findUnique({
       where: { id: bookingId },
       include: {
         customer: true,
@@ -24,17 +42,19 @@ export async function POST(request: Request) {
     });
 
     if (!booking) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: 'Booking not found' },
         { status: 404 }
       );
+      return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
     }
 
     if (booking.depositPaid) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: 'Deposit already paid for this booking' },
         { status: 400 }
       );
+      return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
     }
 
     // Create or retrieve payment intent
@@ -47,7 +67,7 @@ export async function POST(request: Request) {
         
         // If already succeeded, mark as paid
         if (paymentIntent.status === 'succeeded') {
-          await prisma.booking.update({
+          await db.booking.update({
             where: { id: bookingId },
             data: {
               depositPaid: true,
@@ -56,10 +76,11 @@ export async function POST(request: Request) {
             }
           });
           
-          return NextResponse.json({
+          const response = NextResponse.json({
             clientSecret: paymentIntent.client_secret,
             alreadyPaid: true
           });
+          return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
         }
       } catch {
         // Intent not found or invalid, create new one
@@ -85,7 +106,7 @@ export async function POST(request: Request) {
       });
 
       // Update booking with intent ID
-      await prisma.booking.update({
+      await db.booking.update({
         where: { id: bookingId },
         data: {
           stripeIntentId: paymentIntent.id
@@ -93,16 +114,20 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       amount: DEPOSIT_AMOUNT,
       bookingReference: booking.bookingReference
     });
+
+    // Apply rate limit headers and CORS
+    return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
   } catch (error) {
     console.error('Payment intent creation failed:', error);
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: 'Failed to create payment intent' },
       { status: 500 }
     );
+    return withCORS(response, request);
   }
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/db';
 import { generateTimeSlots, getOperatingHours } from '@/lib/operating-hours';
 
 export async function GET(request: Request) {
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     // If specific time is provided, check availability for that time
     if (time) {
       // Find all bookings for the entire night (any time slot)
-      const allBookingsForDate = await prisma.booking.findMany({
+      const allBookingsForDate = await db.booking.findMany({
         where: {
           bookingDate: bookingDate,
           status: {
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
     }
     
     // If no specific time, return all bookings for the date
-    const allBookingsForDate = await prisma.booking.findMany({
+    const allBookingsForDate = await db.booking.findMany({
       where: {
         bookingDate: bookingDate,
         status: {

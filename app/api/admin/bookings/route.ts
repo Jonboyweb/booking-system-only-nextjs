@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/lib/generated/prisma';
+import { db } from '@/lib/db';
 import { getAuthUser } from '@/src/middleware/auth';
 
-const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   // Check authentication
@@ -33,7 +32,7 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    const bookings = await prisma.booking.findMany({
+    const bookings = await db.booking.findMany({
       where,
       orderBy: {
         bookingDate: 'desc'

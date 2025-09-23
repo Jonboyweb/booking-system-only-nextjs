@@ -1,10 +1,19 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { 
-  validateBooking, 
-  isDateWithinBookingWindow,
-  isValidTableCapacity 
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import {
+  isValidTableCapacity
 } from '@/lib/booking-validation';
+import {
+  createBookingSchema,
+  validateRequest,
+  formatZodError,
+  sanitizeString,
+  bookingReferenceSchema,
+  idParamSchema
+} from '@/lib/validations/booking';
+import { z } from 'zod';
+import { checkRateLimit, applyRateLimitHeaders, RateLimitConfigs } from '@/lib/rate-limit';
+import { withCORS } from '@/lib/cors';
 
 // Generate booking reference
 function generateBookingRef(): string {
@@ -16,131 +25,136 @@ function generateBookingRef(): string {
   return ref;
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    
-    // Validate required fields
-    if (!body.tableId || !body.date || !body.time || !body.partySize || !body.customer) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
+    // Apply rate limiting for booking creation
+    const rateLimitResult = await checkRateLimit(request, 'booking-create', RateLimitConfigs.bookingCreate);
+
+    if (!rateLimitResult.success) {
+      const response = NextResponse.json(
+        {
+          success: false,
+          error: 'Too many booking attempts. Please try again later.',
+          retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+        },
+        { status: 429 }
+      );
+      return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
+    }
+
+    // Parse and validate request body with Zod
+    const validationResult = await validateRequest(request, createBookingSchema);
+
+    if (!validationResult.success) {
+      const response = NextResponse.json(
+        {
+          success: false,
+          error: 'Validation failed',
+          details: validationResult.details ? formatZodError(validationResult.details) : validationResult.error
+        },
         { status: 400 }
       );
+      return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
     }
-    
-    // Validate booking date is within 31-day window
-    const bookingDate = new Date(body.date);
-    if (!isDateWithinBookingWindow(bookingDate)) {
-      return NextResponse.json(
-        { error: 'Bookings can only be made up to 31 days in advance' },
-        { status: 400 }
-      );
-    }
-    
+
+    const validatedData = validationResult.data;
+
+    // Parse the date string to Date object
+    const bookingDate = new Date(validatedData.date);
+
     // Get table information
-    const table = await prisma.table.findUnique({
-      where: { id: body.tableId }
+    const table = await db.table.findUnique({
+      where: { id: String(validatedData.tableId) }
     });
-    
+
     if (!table) {
-      return NextResponse.json(
-        { error: 'Invalid table selected' },
+      const response = NextResponse.json(
+        { success: false, error: 'Invalid table selected' },
         { status: 400 }
       );
+      return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
     }
-    
-    // Handle combined tables (15 & 16)
-    let combinedTable = null;
-    if (body.combinedTableId) {
-      combinedTable = await prisma.table.findUnique({
-        where: { id: body.combinedTableId }
-      });
-      
-      // Verify tables can be combined
-      if (!table.canCombineWith.includes(combinedTable?.tableNumber || 0)) {
-        return NextResponse.json(
-          { error: 'These tables cannot be combined' },
-          { status: 400 }
-        );
-      }
-    }
-    
+
     // Validate table capacity
-    if (!isValidTableCapacity(table, body.partySize, combinedTable || undefined)) {
-      const minCapacity = combinedTable ? 7 : table.capacityMin;
-      const maxCapacity = combinedTable ? 
-        table.capacityMax + combinedTable.capacityMax : 
-        table.capacityMax;
-      
-      return NextResponse.json(
-        { error: `Party size must be between ${minCapacity} and ${maxCapacity} for this table` },
+    if (!isValidTableCapacity(table, validatedData.partySize)) {
+      const response = NextResponse.json(
+        {
+          success: false,
+          error: `Party size must be between ${table.capacityMin} and ${table.capacityMax} for this table`
+        },
         { status: 400 }
       );
+      return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
     }
-    
-    // Get all bookings for validation (check entire day, not just specific time)
-    const existingBookings = await prisma.booking.findMany({
+
+    // Check for existing bookings at the same time slot
+    const existingBookings = await db.booking.findMany({
       where: {
         bookingDate: bookingDate,
+        bookingTime: validatedData.timeSlot,
+        tableId: String(validatedData.tableId),
         status: {
           in: ['PENDING', 'CONFIRMED']
-        },
-        OR: [
-          { tableId: body.tableId },
-          ...(body.combinedTableId ? [{ tableId: body.combinedTableId }] : [])
-        ]
+        }
       }
     });
-    
-    // Validate booking
-    const validation = validateBooking(
-      bookingDate,
-      body.time,
-      body.partySize,
-      table,
-      existingBookings,
-      combinedTable || undefined
-    );
-    
-    if (!validation.valid) {
-      return NextResponse.json(
-        { error: validation.errors.join('. ') },
+
+    if (existingBookings.length > 0) {
+      const response = NextResponse.json(
+        { success: false, error: 'This table is already booked for the selected time slot' },
         { status: 400 }
       );
+      return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
     }
-    
-    // Create or find customer
-    let customer = await prisma.customer.findUnique({
-      where: { email: body.customer.email }
+
+    // Create or find customer with validated and sanitized data
+    let customer = await db.customer.findUnique({
+      where: { email: validatedData.customer.email }
     });
-    
+
     if (!customer) {
-      customer = await prisma.customer.create({
+      // Split name into first and last name
+      const nameParts = validatedData.customer.name.trim().split(' ');
+      const firstName = sanitizeString(nameParts[0]);
+      const lastName = sanitizeString(nameParts.slice(1).join(' ') || nameParts[0]);
+
+      customer = await db.customer.create({
         data: {
-          firstName: body.customer.firstName,
-          lastName: body.customer.lastName,
-          email: body.customer.email,
-          phone: body.customer.phone,
-          dateOfBirth: body.customer.dateOfBirth ? new Date(body.customer.dateOfBirth) : null,
-          marketingConsent: body.customer.marketingConsent || false
+          firstName,
+          lastName,
+          email: validatedData.customer.email,
+          phone: validatedData.customer.phone,
+          marketingConsent: false
         }
       });
     }
-    
-    // Create booking
-    const booking = await prisma.booking.create({
+
+    // Generate unique booking reference
+    let bookingReference: string;
+    let isUnique = false;
+    do {
+      bookingReference = generateBookingRef();
+      const existing = await db.booking.findUnique({
+        where: { bookingReference }
+      });
+      isUnique = !existing;
+    } while (!isUnique);
+
+    // Create booking with validated data
+    const booking = await db.booking.create({
       data: {
-        bookingReference: generateBookingRef(),
-        tableId: body.tableId,
+        bookingReference,
+        tableId: String(validatedData.tableId),
         customerId: customer.id,
-        bookingDate: new Date(body.date),
-        bookingTime: body.time,
-        partySize: body.partySize,
+        bookingDate,
+        bookingTime: validatedData.timeSlot,
+        partySize: validatedData.partySize,
         status: 'PENDING',
         depositAmount: 50,
         depositPaid: false,
-        drinkPackageId: body.drinkPackageId || null,
-        specialRequests: body.specialRequests || null
+        drinkPackageId: validatedData.packageId ? String(validatedData.packageId) : null,
+        specialRequests: validatedData.specialRequests ? sanitizeString(validatedData.specialRequests) : null,
+        stripePaymentId: validatedData.stripePaymentIntentId || null
       },
       include: {
         table: true,
@@ -148,67 +162,87 @@ export async function POST(request: Request) {
         drinkPackage: true
       }
     });
-    
-    // Create custom order if bottles selected
-    if ((body.selectedSpirits && body.selectedSpirits.length > 0) || 
-        (body.selectedChampagnes && body.selectedChampagnes.length > 0)) {
-      
-      // Calculate total price
+
+    // Handle custom order if provided
+    if (validatedData.customOrder && validatedData.customOrder.length > 0) {
       let totalPrice = 0;
-      const items: {
-        spirits: Array<{id: string; price: number;}>;
-        champagnes: Array<{id: string; price: number;}>;
-      } = {
-        spirits: [],
-        champagnes: []
+      const items = {
+        spirits: [] as Array<{id: number; name: string; price: number; quantity: number;}>,
+        champagnes: [] as Array<{id: number; name: string; price: number; quantity: number;}>
       };
-      
-      if (body.selectedSpirits && body.selectedSpirits.length > 0) {
-        const spirits = await prisma.spirit.findMany({
-          where: { id: { in: body.selectedSpirits } }
+
+      // Process spirits with validated quantities
+      for (const orderItem of validatedData.customOrder) {
+        const spirit = await db.spirit.findUnique({
+          where: { id: String(orderItem.spiritId) }
         });
-        
-        for (const spirit of spirits) {
-          await prisma.bookingSpirit.create({
-            data: {
-              bookingId: booking.id,
-              spiritId: spirit.id,
-              quantity: 1,
-              price: spirit.price
-            }
-          });
-          items.spirits.push({
-            ...spirit,
-            price: Number(spirit.price)
-          });
-          totalPrice += Number(spirit.price);
+
+        if (!spirit) {
+          // Rollback booking if spirit not found
+          await db.booking.delete({ where: { id: booking.id } });
+          const response = NextResponse.json(
+            { success: false, error: `Invalid spirit ID: ${orderItem.spiritId}` },
+            { status: 400 }
+          );
+          return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
         }
-      }
-      
-      if (body.selectedChampagnes && body.selectedChampagnes.length > 0) {
-        const champagnes = await prisma.champagne.findMany({
-          where: { id: { in: body.selectedChampagnes } }
+
+        await db.bookingSpirit.create({
+          data: {
+            bookingId: booking.id,
+            spiritId: spirit.id,
+            quantity: orderItem.quantity,
+            price: spirit.price
+          }
         });
-        
-        for (const champagne of champagnes) {
-          await prisma.bookingChampagne.create({
+
+        items.spirits.push({
+          id: Number(spirit.id),
+          name: spirit.name,
+          price: Number(spirit.price),
+          quantity: orderItem.quantity
+        });
+        totalPrice += Number(spirit.price) * orderItem.quantity;
+      }
+
+      // Process champagnes if provided
+      if (validatedData.champagneOrder && validatedData.champagneOrder.length > 0) {
+        for (const champagneItem of validatedData.champagneOrder) {
+          const champagne = await db.champagne.findUnique({
+            where: { id: String(champagneItem.champagneId) }
+          });
+
+          if (!champagne) {
+            // Rollback booking if champagne not found
+            await db.booking.delete({ where: { id: booking.id } });
+            const response = NextResponse.json(
+              { success: false, error: `Invalid champagne ID: ${champagneItem.champagneId}` },
+              { status: 400 }
+            );
+            return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
+          }
+
+          await db.bookingChampagne.create({
             data: {
               bookingId: booking.id,
               champagneId: champagne.id,
-              quantity: 1,
+              quantity: champagneItem.quantity,
               price: champagne.price
             }
           });
+
           items.champagnes.push({
-            ...champagne,
-            price: Number(champagne.price)
+            id: Number(champagne.id),
+            name: champagne.name,
+            price: Number(champagne.price),
+            quantity: champagneItem.quantity
           });
-          totalPrice += Number(champagne.price);
+          totalPrice += Number(champagne.price) * champagneItem.quantity;
         }
       }
-      
+
       // Create custom order record
-      await prisma.customOrder.create({
+      await db.customOrder.create({
         data: {
           bookingId: booking.id,
           items,
@@ -216,27 +250,43 @@ export async function POST(request: Request) {
         }
       });
     }
-    
-    return NextResponse.json(booking, { status: 201 });
+
+    const response = NextResponse.json({
+      success: true,
+      data: booking
+    }, { status: 201 });
+
+    // Apply rate limit headers and CORS
+    return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
   } catch (error) {
     console.error('Booking creation failed:', error);
-    return NextResponse.json(
-      { error: 'Failed to create booking' },
+    const response = NextResponse.json(
+      { success: false, error: 'Failed to create booking' },
       { status: 500 }
     );
+    return withCORS(response, request);
   }
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const reference = searchParams.get('reference');
     const email = searchParams.get('email');
-    
+
+    // Validate and process ID parameter
     if (id) {
-      const booking = await prisma.booking.findUnique({
-        where: { id },
+      const validationResult = idParamSchema.safeParse(id);
+      if (!validationResult.success) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid booking ID format' },
+          { status: 400 }
+        );
+      }
+
+      const booking = await db.booking.findUnique({
+        where: { id: String(validationResult.data) },
         include: {
           table: true,
           customer: true,
@@ -254,20 +304,31 @@ export async function GET(request: Request) {
           }
         }
       });
-      
+
       if (!booking) {
-        return NextResponse.json(
-          { error: 'Booking not found' },
+        const response = NextResponse.json(
+          { success: false, error: 'Booking not found' },
           { status: 404 }
         );
+        return withCORS(response, request);
       }
-      
-      return NextResponse.json(booking);
+
+      const response = NextResponse.json({ success: true, data: booking });
+      return withCORS(response, request);
     }
-    
+
+    // Validate and process reference parameter
     if (reference) {
-      const booking = await prisma.booking.findUnique({
-        where: { bookingReference: reference },
+      const validationResult = bookingReferenceSchema.safeParse(reference);
+      if (!validationResult.success) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid booking reference format' },
+          { status: 400 }
+        );
+      }
+
+      const booking = await db.booking.findUnique({
+        where: { bookingReference: validationResult.data },
         include: {
           table: true,
           customer: true,
@@ -285,20 +346,33 @@ export async function GET(request: Request) {
           }
         }
       });
-      
+
       if (!booking) {
-        return NextResponse.json(
-          { error: 'Booking not found' },
+        const response = NextResponse.json(
+          { success: false, error: 'Booking not found' },
           { status: 404 }
         );
+        return withCORS(response, request);
       }
-      
-      return NextResponse.json(booking);
+
+      const response = NextResponse.json({ success: true, data: booking });
+      return withCORS(response, request);
     }
-    
+
+    // Validate and process email parameter
     if (email) {
-      const customer = await prisma.customer.findUnique({
-        where: { email },
+      const emailSchema = z.string().email('Invalid email format').max(255);
+      const validationResult = emailSchema.safeParse(email);
+
+      if (!validationResult.success) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid email format' },
+          { status: 400 }
+        );
+      }
+
+      const customer = await db.customer.findUnique({
+        where: { email: validationResult.data.toLowerCase() },
         include: {
           bookings: {
             include: {
@@ -312,23 +386,27 @@ export async function GET(request: Request) {
           }
         }
       });
-      
+
       if (!customer) {
-        return NextResponse.json({ bookings: [] });
+        const response = NextResponse.json({ success: true, data: { bookings: [] } });
+        return withCORS(response, request);
       }
-      
-      return NextResponse.json({ bookings: customer.bookings });
+
+      const response = NextResponse.json({ success: true, data: { bookings: customer.bookings } });
+      return withCORS(response, request);
     }
-    
-    return NextResponse.json(
-      { error: 'Reference or email required' },
+
+    const response = NextResponse.json(
+      { success: false, error: 'Booking ID, reference, or email required' },
       { status: 400 }
     );
+    return withCORS(response, request);
   } catch (error) {
     console.error('Failed to fetch booking:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch booking' },
+    const response = NextResponse.json(
+      { success: false, error: 'Failed to fetch booking' },
       { status: 500 }
     );
+    return withCORS(response, request);
   }
 }

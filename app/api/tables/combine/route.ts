@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/db';
 
 export async function POST(request: Request) {
   try {
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     }
     
     // Get the tables
-    const tables = await prisma.table.findMany({
+    const tables = await db.table.findMany({
       where: {
         tableNumber: {
           in: tableNumbers
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     // Check availability if date and time provided
     if (date && time) {
       const bookingDate = new Date(date);
-      const bookings = await prisma.booking.findMany({
+      const bookings = await db.booking.findMany({
         where: {
           bookingDate,
           bookingTime: time,

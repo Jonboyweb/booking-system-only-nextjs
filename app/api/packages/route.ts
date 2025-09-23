@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { withCORS } from '@/lib/cors';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const packages = await prisma.drinkPackage.findMany({
+    const packages = await db.drinkPackage.findMany({
       where: {
         isActive: true
       },
@@ -11,13 +12,15 @@ export async function GET() {
         price: 'asc'
       }
     });
-    
-    return NextResponse.json(packages);
+
+    const response = NextResponse.json(packages);
+    return withCORS(response, request);
   } catch (error) {
     console.error('Failed to fetch packages:', error);
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: 'Failed to fetch packages' },
       { status: 500 }
     );
+    return withCORS(response, request);
   }
 }

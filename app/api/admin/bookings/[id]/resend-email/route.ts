@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/lib/generated/prisma';
+import { db } from '@/lib/db';
 import { getAuthUser } from '@/src/middleware/auth';
 import { sendBookingConfirmationEmail } from '@/src/lib/email/sendgrid';
 
-const prisma = new PrismaClient();
 
 export async function POST(
   request: NextRequest,
@@ -19,7 +18,7 @@ export async function POST(
     const { id } = await params;
     
     // Fetch booking with all necessary relations
-    const booking = await prisma.booking.findUnique({
+    const booking = await db.booking.findUnique({
       where: { id },
       include: {
         customer: true,

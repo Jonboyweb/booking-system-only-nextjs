@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/lib/generated/prisma';
+import { db } from '@/lib/db';
 import { getAuthUser } from '@/src/middleware/auth';
-
-const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   // Check authentication
@@ -18,7 +16,7 @@ export async function GET(request: NextRequest) {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     // Today's bookings
-    const todayBookings = await prisma.booking.count({
+    const todayBookings = await db.booking.count({
       where: {
         bookingDate: {
           gte: startOfDay,
@@ -28,7 +26,7 @@ export async function GET(request: NextRequest) {
     });
 
     // This week's bookings
-    const weekBookings = await prisma.booking.count({
+    const weekBookings = await db.booking.count({
       where: {
         bookingDate: {
           gte: startOfWeek
@@ -37,7 +35,7 @@ export async function GET(request: NextRequest) {
     });
 
     // This month's bookings
-    const monthBookings = await prisma.booking.count({
+    const monthBookings = await db.booking.count({
       where: {
         bookingDate: {
           gte: startOfMonth
@@ -46,7 +44,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Total revenue (confirmed bookings)
-    const revenue = await prisma.booking.aggregate({
+    const revenue = await db.booking.aggregate({
       where: {
         status: 'CONFIRMED',
         depositPaid: true
@@ -57,17 +55,17 @@ export async function GET(request: NextRequest) {
     });
 
     // Pending bookings
-    const pendingBookings = await prisma.booking.count({
+    const pendingBookings = await db.booking.count({
       where: { status: 'PENDING' }
     });
 
     // Confirmed bookings
-    const confirmedBookings = await prisma.booking.count({
+    const confirmedBookings = await db.booking.count({
       where: { status: 'CONFIRMED' }
     });
 
     // Most popular table
-    const popularTable = await prisma.booking.groupBy({
+    const popularTable = await db.booking.groupBy({
       by: ['tableId'],
       _count: {
         tableId: true
@@ -82,7 +80,7 @@ export async function GET(request: NextRequest) {
 
     let popularTableName = 'N/A';
     if (popularTable.length > 0) {
-      const table = await prisma.table.findUnique({
+      const table = await db.table.findUnique({
         where: { id: popularTable[0].tableId }
       });
       if (table) {
@@ -91,7 +89,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Most popular package
-    const popularPackage = await prisma.booking.groupBy({
+    const popularPackage = await db.booking.groupBy({
       by: ['drinkPackageId'],
       where: {
         drinkPackageId: {
@@ -111,7 +109,7 @@ export async function GET(request: NextRequest) {
 
     let popularPackageName = 'N/A';
     if (popularPackage.length > 0 && popularPackage[0].drinkPackageId) {
-      const pkg = await prisma.drinkPackage.findUnique({
+      const pkg = await db.drinkPackage.findUnique({
         where: { id: popularPackage[0].drinkPackageId }
       });
       if (pkg) {

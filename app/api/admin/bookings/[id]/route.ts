@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/lib/generated/prisma';
+import { db } from '@/lib/db';
 import { getAuthUser } from '@/src/middleware/auth';
 
-const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
@@ -17,7 +16,7 @@ export async function GET(
   try {
     const { id } = await params;
     
-    const booking = await prisma.booking.findUnique({
+    const booking = await db.booking.findUnique({
       where: { id },
       include: {
         customer: true,
@@ -93,7 +92,7 @@ export async function PATCH(
     const body = await request.json();
 
     // Get current booking for comparison and validation
-    const currentBooking = await prisma.booking.findUnique({
+    const currentBooking = await db.booking.findUnique({
       where: { id },
       include: {
         table: true,
@@ -177,7 +176,7 @@ export async function PATCH(
         // Validate party size for the new table
         const capacityValid = await validatePartySize(body.tableId, partySizeToCheck);
         if (!capacityValid) {
-          const newTable = await prisma.table.findUnique({
+          const newTable = await db.table.findUnique({
             where: { id: body.tableId }
           });
           return NextResponse.json(
@@ -212,7 +211,7 @@ export async function PATCH(
     };
 
     // Update the booking
-    const updatedBooking = await prisma.booking.update({
+    const updatedBooking = await db.booking.update({
       where: { id },
       data: updateData,
       include: {
@@ -310,7 +309,7 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    await prisma.booking.update({
+    await db.booking.update({
       where: { id },
       data: {
         status: 'CANCELLED',

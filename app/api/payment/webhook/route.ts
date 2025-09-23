@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { stripe } from '@/lib/stripe';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/db';
 import { sendBookingConfirmationEmail } from '../../../../src/lib/email/sendgrid';
 import Stripe from 'stripe';
 
@@ -72,7 +72,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   }
 
   // Update booking status
-  const booking = await prisma.booking.update({
+  const booking = await db.booking.update({
     where: { id: bookingId },
     data: {
       depositPaid: true,
@@ -131,7 +131,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   console.log(`Payment confirmed for booking ${booking.bookingReference}`);
   
   // Log the successful payment
-  await prisma.paymentLog.create({
+  await db.paymentLog.create({
     data: {
       bookingId: booking.id,
       stripePaymentId: paymentIntent.id,
@@ -152,7 +152,7 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
   }
 
   // Log the failed payment
-  await prisma.paymentLog.create({
+  await db.paymentLog.create({
     data: {
       bookingId,
       stripePaymentId: paymentIntent.id,
@@ -171,7 +171,7 @@ async function handleRefund(charge: Stripe.Charge) {
   const paymentIntentId = charge.payment_intent as string;
   
   // Find the booking by payment intent ID
-  const booking = await prisma.booking.findFirst({
+  const booking = await db.booking.findFirst({
     where: { stripePaymentId: paymentIntentId },
   });
 
@@ -181,7 +181,7 @@ async function handleRefund(charge: Stripe.Charge) {
   }
 
   // Update booking status
-  await prisma.booking.update({
+  await db.booking.update({
     where: { id: booking.id },
     data: {
       status: 'CANCELLED',
@@ -192,7 +192,7 @@ async function handleRefund(charge: Stripe.Charge) {
   });
 
   // Log the refund
-  await prisma.paymentLog.create({
+  await db.paymentLog.create({
     data: {
       bookingId: booking.id,
       stripePaymentId: paymentIntentId,

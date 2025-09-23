@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { withCORS } from '@/lib/cors';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const spirits = await prisma.spirit.findMany({
+    const spirits = await db.spirit.findMany({
       where: {
         isActive: true
       },
@@ -12,19 +13,21 @@ export async function GET() {
         { name: 'asc' }
       ]
     });
-    
+
     // Map isActive to isAvailable for frontend compatibility
     const mappedSpirits = spirits.map(spirit => ({
       ...spirit,
       isAvailable: spirit.isActive
     }));
-    
-    return NextResponse.json(mappedSpirits);
+
+    const response = NextResponse.json(mappedSpirits);
+    return withCORS(response, request);
   } catch (error) {
     console.error('Failed to fetch spirits:', error);
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: 'Failed to fetch spirits' },
       { status: 500 }
     );
+    return withCORS(response, request);
   }
 }

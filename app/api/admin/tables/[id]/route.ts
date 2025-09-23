@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/lib/generated/prisma';
+import { db } from '@/lib/db';
 import { getAuthUser } from '@/src/middleware/auth';
-
-const prisma = new PrismaClient();
 
 export async function PATCH(
   request: NextRequest,
@@ -18,7 +16,7 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    const updatedTable = await prisma.table.update({
+    const updatedTable = await db.table.update({
       where: { id },
       data: {
         isActive: body.isActive,

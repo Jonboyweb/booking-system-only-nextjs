@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/db';
 import { isDateWithinBookingWindow } from '@/lib/booking-validation';
 
 export async function GET(
@@ -19,7 +19,7 @@ export async function GET(
     }
     
     // Get all tables
-    const tables = await prisma.table.findMany({
+    const tables = await db.table.findMany({
       orderBy: [
         { floor: 'asc' },
         { tableNumber: 'asc' }
@@ -27,7 +27,7 @@ export async function GET(
     });
     
     // Get all bookings for the date
-    const bookings = await prisma.booking.findMany({
+    const bookings = await db.booking.findMany({
       where: {
         bookingDate: date,
         status: {

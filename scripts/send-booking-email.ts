@@ -1,15 +1,14 @@
 import * as dotenv from 'dotenv';
-import { PrismaClient } from '../lib/generated/prisma';
+import { db } from '../lib/db';
 
 dotenv.config();
 
-const prisma = new PrismaClient();
 
 // Import the email function with dynamic import to handle module differences
 async function sendTestBookingEmail() {
   try {
     // Get the most recent booking
-    const booking = await prisma.booking.findFirst({
+    const booking = await db.booking.findFirst({
       orderBy: { createdAt: 'desc' },
       include: {
         customer: true,
@@ -73,7 +72,7 @@ async function sendTestBookingEmail() {
   } catch (error) {
     console.error('Error:', error);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

@@ -1,15 +1,14 @@
-import { PrismaClient } from '../lib/generated/prisma';
+import { db } from '../lib/db';
 import { sendBookingConfirmationEmail } from '../src/lib/email/sendgrid';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const prisma = new PrismaClient();
 
 async function processPayment(bookingReference: string) {
   try {
     // Find the booking
-    const booking = await prisma.booking.findUnique({
+    const booking = await db.booking.findUnique({
       where: { bookingReference },
       include: {
         customer: true,
@@ -38,7 +37,7 @@ async function processPayment(bookingReference: string) {
     console.log('Deposit paid:', booking.depositPaid);
 
     // Update booking status to confirmed
-    const updatedBooking = await prisma.booking.update({
+    const updatedBooking = await db.booking.update({
       where: { id: booking.id },
       data: {
         depositPaid: true,
@@ -81,7 +80,7 @@ async function processPayment(bookingReference: string) {
     }
 
     // Log the successful payment
-    await prisma.paymentLog.create({
+    await db.paymentLog.create({
       data: {
         bookingId: booking.id,
         stripePaymentId: booking.stripeIntentId!,
@@ -107,7 +106,7 @@ async function processPayment(bookingReference: string) {
   } catch (error) {
     console.error('Error processing payment:', error);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/lib/generated/prisma';
+import { db } from '@/lib/db';
 import { getAuthUser } from '@/src/middleware/auth';
 import { processRefund } from '@/src/lib/payment/stripe-refund';
 
-const prisma = new PrismaClient();
 
 // Map user-friendly reasons to Stripe's valid reasons
 function mapToStripeReason(reason: string | undefined): string {
@@ -48,7 +47,7 @@ export async function POST(
     const { amount, reason, sendEmail } = body;
 
     // Fetch the booking
-    const booking = await prisma.booking.findUnique({
+    const booking = await db.booking.findUnique({
       where: { id },
       include: {
         customer: true,
@@ -118,7 +117,7 @@ export async function POST(
       });
       
       // Log failed refund attempt
-      await prisma.paymentLog.create({
+      await db.paymentLog.create({
         data: {
           bookingId: booking.id,
           stripePaymentId: booking.stripeIntentId,
@@ -141,7 +140,7 @@ export async function POST(
     }
 
     // Update booking with refund information
-    const updatedBooking = await prisma.booking.update({
+    const updatedBooking = await db.booking.update({
       where: { id },
       data: {
         depositRefunded: true,
@@ -153,7 +152,7 @@ export async function POST(
     });
 
     // Log successful refund
-    await prisma.paymentLog.create({
+    await db.paymentLog.create({
       data: {
         bookingId: booking.id,
         stripePaymentId: refundResult.refundId!,
@@ -171,7 +170,7 @@ export async function POST(
     });
 
     // Create modification record for audit trail
-    await prisma.bookingModification.create({
+    await db.bookingModification.create({
       data: {
         bookingId: booking.id,
         modifiedBy: user.email,
@@ -270,7 +269,7 @@ export async function GET(
     const { id } = await params;
 
     // Fetch the booking with refund info
-    const booking = await prisma.booking.findUnique({
+    const booking = await db.booking.findUnique({
       where: { id },
       select: {
         id: true,

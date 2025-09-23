@@ -1,6 +1,4 @@
-import { PrismaClient } from '@/lib/generated/prisma';
-
-const prisma = new PrismaClient();
+import { db } from '@/lib/db';
 
 /**
  * Check if a specific table is available for a given date and time
@@ -20,7 +18,7 @@ export async function checkTableAvailability(
     const bookingDate = new Date(date);
     
     // Check for existing bookings at this date/time for the table
-    const existingBookings = await prisma.booking.findMany({
+    const existingBookings = await db.booking.findMany({
       where: {
         tableId,
         bookingDate,
@@ -50,7 +48,7 @@ export async function validatePartySize(
   partySize: number
 ): Promise<boolean> {
   try {
-    const table = await prisma.table.findUnique({
+    const table = await db.table.findUnique({
       where: { id: tableId }
     });
 
@@ -83,7 +81,7 @@ export async function getAvailableTablesForDateTime(
     const bookingDate = new Date(date);
     
     // Get all tables that can accommodate the party size
-    const suitableTables = await prisma.table.findMany({
+    const suitableTables = await db.table.findMany({
       where: {
         capacityMin: { lte: partySize },
         capacityMax: { gte: partySize },
@@ -95,7 +93,7 @@ export async function getAvailableTablesForDateTime(
     });
 
     // Get all bookings for this date/time
-    const bookedTables = await prisma.booking.findMany({
+    const bookedTables = await db.booking.findMany({
       where: {
         bookingDate,
         bookingTime: time,
@@ -176,8 +174,8 @@ export async function canCombineTables(
 
     // Get tables 15 and 16
     const [table15, table16] = await Promise.all([
-      prisma.table.findFirst({ where: { tableNumber: 15 } }),
-      prisma.table.findFirst({ where: { tableNumber: 16 } })
+      db.table.findFirst({ where: { tableNumber: 15 } }),
+      db.table.findFirst({ where: { tableNumber: 16 } })
     ]);
 
     if (!table15 || !table16) {
@@ -185,7 +183,7 @@ export async function canCombineTables(
     }
 
     // Check if either table is already booked
-    const existingBookings = await prisma.booking.findMany({
+    const existingBookings = await db.booking.findMany({
       where: {
         tableId: {
           in: [table15.id, table16.id]
@@ -223,7 +221,7 @@ export async function getBookingConflicts(
   try {
     const bookingDate = new Date(date);
     
-    const conflicts = await prisma.booking.findMany({
+    const conflicts = await db.booking.findMany({
       where: {
         tableId,
         bookingDate,
@@ -288,7 +286,7 @@ export async function getTableWithAvailability(
   excludeBookingId?: string
 ): Promise<{id: string; tableNumber: number; floor: string; capacityMin: number; capacityMax: number; isVip: boolean; isAvailable: boolean;} | null> {
   try {
-    const table = await prisma.table.findUnique({
+    const table = await db.table.findUnique({
       where: { id: tableId }
     });
 

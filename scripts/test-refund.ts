@@ -1,9 +1,8 @@
 #!/usr/bin/env tsx
 
-import { PrismaClient } from '../lib/generated/prisma';
+import { db } from '../lib/db';
 import Stripe from 'stripe';
 
-const prisma = new PrismaClient();
 
 // Initialize Stripe only if key is available
 let stripe: Stripe | null = null;
@@ -19,7 +18,7 @@ async function testRefundFunctionality() {
   try {
     // 1. Create a test customer
     console.log('1️⃣ Creating test customer for refund test...');
-    const customer = await prisma.customer.create({
+    const customer = await db.customer.create({
       data: {
         firstName: 'Refund',
         lastName: 'Test',
@@ -32,7 +31,7 @@ async function testRefundFunctionality() {
 
     // 2. Get a table for testing
     console.log('2️⃣ Getting test table...');
-    const table = await prisma.table.findFirst({
+    const table = await db.table.findFirst({
       where: { tableNumber: 3 }
     });
     if (!table) throw new Error('Table not found');
@@ -74,7 +73,7 @@ async function testRefundFunctionality() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
 
-    const booking = await prisma.booking.create({
+    const booking = await db.booking.create({
       data: {
         bookingReference: `REFUND-TEST-${Date.now()}`,
         tableId: table.id,
@@ -107,7 +106,7 @@ async function testRefundFunctionality() {
     console.log('5️⃣ Testing refund through API endpoint...');
     
     // First, let's create an admin token for testing
-    const adminUser = await prisma.adminUser.findFirst({
+    const adminUser = await db.adminUser.findFirst({
       where: { email: 'admin@backroomleeds.co.uk' }
     });
 
@@ -121,7 +120,7 @@ async function testRefundFunctionality() {
     console.log('6️⃣ Simulating refund process...');
     
     // Update booking with refund info
-    const refundedBooking = await prisma.booking.update({
+    const refundedBooking = await db.booking.update({
       where: { id: booking.id },
       data: {
         depositRefunded: true,
@@ -133,7 +132,7 @@ async function testRefundFunctionality() {
     });
 
     // Create payment log for refund
-    await prisma.paymentLog.create({
+    await db.paymentLog.create({
       data: {
         bookingId: booking.id,
         stripePaymentId: 're_test_' + Date.now(),
@@ -149,7 +148,7 @@ async function testRefundFunctionality() {
     });
 
     // Create modification record
-    await prisma.bookingModification.create({
+    await db.bookingModification.create({
       data: {
         bookingId: booking.id,
         modifiedBy: 'test_script',
@@ -176,14 +175,14 @@ async function testRefundFunctionality() {
     // 7. Verify refund was recorded
     console.log('7️⃣ Verifying refund records...');
     
-    const paymentLogs = await prisma.paymentLog.findMany({
+    const paymentLogs = await db.paymentLog.findMany({
       where: {
         bookingId: booking.id,
         status: 'REFUNDED'
       }
     });
 
-    const modifications = await prisma.bookingModification.findMany({
+    const modifications = await db.bookingModification.findMany({
       where: {
         bookingId: booking.id,
         reason: { contains: 'Refund processed' }
@@ -225,7 +224,7 @@ async function testRefundFunctionality() {
   } catch (error) {
     console.error('❌ Test failed:', error);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

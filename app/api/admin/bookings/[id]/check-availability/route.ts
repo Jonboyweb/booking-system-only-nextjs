@@ -52,13 +52,13 @@ export async function POST(
     const capacityValid = await validatePartySize(tableId, partySize);
 
     // Get conflicts if table is not available
-    let conflicts: any[] = [];
+    let conflicts: Awaited<ReturnType<typeof getBookingConflicts>> = [];
     if (!isAvailable) {
       conflicts = await getBookingConflicts(tableId, date, time, bookingId);
     }
 
     // Get alternative tables if requested table is not available
-    let alternativeTables: any[] = [];
+    let alternativeTables: Array<{id: string; tableNumber: number; floor: string; capacityMin: number; capacityMax: number; isVip: boolean; description: string; features: string[];}> = [];
     if (!isAvailable || !capacityValid) {
       alternativeTables = await getAvailableTablesForDateTime(
         date,
@@ -72,11 +72,7 @@ export async function POST(
       available: isAvailable && capacityValid,
       capacityValid,
       tableAvailable: isAvailable,
-      conflicts: conflicts.map(c => ({
-        bookingReference: c.bookingReference,
-        customerName: `${c.customer.firstName} ${c.customer.lastName}`,
-        partySize: c.partySize
-      })),
+      conflicts: conflicts,
       alternativeTables: alternativeTables.map(t => ({
         id: t.id,
         tableNumber: t.tableNumber,

@@ -23,6 +23,9 @@ model Table {
   updatedAt      DateTime  @updatedAt
   bookings       Booking[]
 
+  @@index([floor, isActive])
+  @@index([capacityMin])
+  @@index([capacityMax])
   @@map("tables")
 }
 
@@ -76,6 +79,11 @@ model Booking {
   @@unique([tableId, bookingDate, bookingTime])
   @@index([bookingDate])
   @@index([status])
+  @@index([bookingReference])
+  @@index([bookingDate, bookingTime])
+  @@index([customerId])
+  @@index([status, bookingDate])
+  @@index([createdAt])
   @@map("bookings")
 }
 

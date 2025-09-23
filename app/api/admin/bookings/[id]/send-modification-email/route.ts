@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/lib/generated/prisma';
+import { db } from '@/lib/db';
 import { getAuthUser } from '@/src/middleware/auth';
 import sgMail from '@sendgrid/mail';
 import { generateBookingModificationEmail } from '@/src/lib/email/templates/booking-modification';
 
-const prisma = new PrismaClient();
 
 // Helper function to get and validate API key
 function getApiKey(): string | undefined {
@@ -53,7 +52,7 @@ export async function POST(
     }
 
     // Fetch current booking to get customer email
-    const booking = await prisma.booking.findUnique({
+    const booking = await db.booking.findUnique({
       where: { id },
       include: {
         customer: true,

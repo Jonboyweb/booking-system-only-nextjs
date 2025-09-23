@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/lib/generated/prisma';
+import { db } from '@/lib/db';
 import { getAuthUser } from '@/src/middleware/auth';
-
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   // Check authentication
@@ -15,13 +13,13 @@ export async function POST(request: NextRequest) {
     const { firstName, lastName, email, phone, marketingConsent } = await request.json();
 
     // Check if customer already exists
-    let customer = await prisma.customer.findUnique({
+    let customer = await db.customer.findUnique({
       where: { email }
     });
 
     if (!customer) {
       // Create new customer
-      customer = await prisma.customer.create({
+      customer = await db.customer.create({
         data: {
           firstName,
           lastName,
@@ -32,7 +30,7 @@ export async function POST(request: NextRequest) {
       });
     } else {
       // Update existing customer
-      customer = await prisma.customer.update({
+      customer = await db.customer.update({
         where: { email },
         data: {
           firstName,
@@ -73,7 +71,7 @@ export async function GET(request: NextRequest) {
       ]
     } : {};
 
-    const customers = await prisma.customer.findMany({
+    const customers = await db.customer.findMany({
       where,
       orderBy: {
         createdAt: 'desc'

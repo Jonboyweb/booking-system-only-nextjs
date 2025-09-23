@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/lib/generated/prisma';
+import { db } from '@/lib/db';
 import { getAuthUser } from '@/src/middleware/auth';
 
-const prisma = new PrismaClient();
 
 function generateBookingReference(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -35,7 +34,7 @@ export async function POST(request: NextRequest) {
     } = await request.json();
 
     // Check for existing booking conflicts
-    const existingBooking = await prisma.booking.findFirst({
+    const existingBooking = await db.booking.findFirst({
       where: {
         tableId,
         bookingDate: new Date(bookingDate),
@@ -54,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create booking
-    const booking = await prisma.booking.create({
+    const booking = await db.booking.create({
       data: {
         bookingReference: generateBookingReference(),
         customerId,

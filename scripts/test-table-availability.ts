@@ -1,6 +1,5 @@
-import { PrismaClient } from '../lib/generated/prisma';
+import { db } from '../lib/db';
 
-const prisma = new PrismaClient();
 
 async function testTableAvailability() {
   console.log('Testing Table 7 availability for September 28, 2025 at 22:30...\n');
@@ -12,7 +11,7 @@ async function testTableAvailability() {
     const tableNumber = 7;
     
     // 1. Check if table 7 exists
-    const table7 = await prisma.table.findFirst({
+    const table7 = await db.table.findFirst({
       where: { tableNumber: tableNumber }
     });
     
@@ -30,7 +29,7 @@ async function testTableAvailability() {
     // 2. Check existing bookings for this date/time
     console.log('\n📅 Checking bookings for September 28, 2025 at 22:30...');
     
-    const existingBookings = await prisma.booking.findMany({
+    const existingBookings = await db.booking.findMany({
       where: {
         bookingDate: testDate,
         bookingTime: testTime,
@@ -72,7 +71,7 @@ async function testTableAvailability() {
     
     // 5. Check all bookings for debugging
     console.log('\n📊 All bookings in database:');
-    const allBookings = await prisma.booking.findMany({
+    const allBookings = await db.booking.findMany({
       include: {
         table: true,
         customer: true
@@ -91,7 +90,7 @@ async function testTableAvailability() {
   } catch (error) {
     console.error('❌ Error testing availability:', error);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

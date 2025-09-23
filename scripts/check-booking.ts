@@ -1,10 +1,9 @@
-import { PrismaClient } from '../lib/generated/prisma';
+import { db } from '../lib/db';
 
-const prisma = new PrismaClient();
 
 async function checkBooking() {
   try {
-    const booking = await prisma.booking.findUnique({
+    const booking = await db.booking.findUnique({
       where: { bookingReference: 'BR-WDLD1I' },
       include: {
         customer: true,
@@ -50,7 +49,7 @@ async function checkBooking() {
   } catch (error) {
     console.error('Error:', error);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

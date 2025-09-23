@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/lib/generated/prisma';
+import { db } from '@/lib/db';
 import { getAuthUser } from '@/src/middleware/auth';
 
-const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
@@ -17,7 +16,7 @@ export async function GET(
   try {
     const { id } = await params;
     
-    const bookings = await prisma.booking.findMany({
+    const bookings = await db.booking.findMany({
       where: {
         customerId: id
       },

@@ -1,8 +1,7 @@
 #!/usr/bin/env tsx
 
-import { PrismaClient } from '../lib/generated/prisma';
+import { db } from '../lib/db';
 
-const prisma = new PrismaClient();
 
 async function createPaidBooking() {
   console.log('💳 Creating a paid booking for refund testing\n');
@@ -10,12 +9,12 @@ async function createPaidBooking() {
   try {
     // 1. Create or find a customer
     console.log('1️⃣ Setting up customer...');
-    let customer = await prisma.customer.findFirst({
+    let customer = await db.customer.findFirst({
       where: { email: 'john.doe@example.com' }
     });
 
     if (!customer) {
-      customer = await prisma.customer.create({
+      customer = await db.customer.create({
         data: {
           firstName: 'John',
           lastName: 'Doe',
@@ -31,7 +30,7 @@ async function createPaidBooking() {
 
     // 2. Get a table
     console.log('\n2️⃣ Selecting table...');
-    const table = await prisma.table.findFirst({
+    const table = await db.table.findFirst({
       where: { tableNumber: 7 }
     });
     if (!table) throw new Error('Table not found');
@@ -44,7 +43,7 @@ async function createPaidBooking() {
     nextFriday.setDate(nextFriday.getDate() + daysUntilFriday);
     nextFriday.setHours(0, 0, 0, 0);
 
-    const booking = await prisma.booking.create({
+    const booking = await db.booking.create({
       data: {
         bookingReference: `BK-${Date.now().toString(36).toUpperCase()}`,
         tableId: table.id,
@@ -68,12 +67,12 @@ async function createPaidBooking() {
     });
 
     // 4. Add a drink package
-    const drinkPackage = await prisma.drinkPackage.findFirst({
+    const drinkPackage = await db.drinkPackage.findFirst({
       where: { name: 'The Speakeasy Special' }
     });
 
     if (drinkPackage) {
-      await prisma.booking.update({
+      await db.booking.update({
         where: { id: booking.id },
         data: { drinkPackageId: drinkPackage.id }
       });
@@ -81,7 +80,7 @@ async function createPaidBooking() {
     }
 
     // 5. Create payment log
-    await prisma.paymentLog.create({
+    await db.paymentLog.create({
       data: {
         bookingId: booking.id,
         stripePaymentId: booking.stripePaymentId!,
@@ -125,7 +124,7 @@ async function createPaidBooking() {
   } catch (error) {
     console.error('❌ Error creating booking:', error);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

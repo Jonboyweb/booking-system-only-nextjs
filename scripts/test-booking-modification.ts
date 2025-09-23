@@ -1,8 +1,7 @@
 #!/usr/bin/env tsx
 
-import { PrismaClient } from '../lib/generated/prisma';
+import { db } from '../lib/db';
 
-const prisma = new PrismaClient();
 
 async function testBookingModification() {
   console.log('🧪 Testing Booking Modification Feature\n');
@@ -10,7 +9,7 @@ async function testBookingModification() {
   try {
     // 1. Create a test customer
     console.log('1️⃣ Creating test customer...');
-    const customer = await prisma.customer.create({
+    const customer = await db.customer.create({
       data: {
         firstName: 'Test',
         lastName: 'Customer',
@@ -23,7 +22,7 @@ async function testBookingModification() {
 
     // 2. Get a table for testing
     console.log('2️⃣ Getting test table...');
-    const table = await prisma.table.findFirst({
+    const table = await db.table.findFirst({
       where: { tableNumber: 5 }
     });
     if (!table) throw new Error('Table not found');
@@ -35,7 +34,7 @@ async function testBookingModification() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
 
-    const booking = await prisma.booking.create({
+    const booking = await db.booking.create({
       data: {
         bookingReference: `TEST-${Date.now()}`,
         tableId: table.id,
@@ -65,7 +64,7 @@ async function testBookingModification() {
 
     // 4. Test availability check
     console.log('4️⃣ Testing availability check...');
-    const availableTable = await prisma.table.findFirst({
+    const availableTable = await db.table.findFirst({
       where: { 
         tableNumber: 8,
         bookings: {
@@ -81,7 +80,7 @@ async function testBookingModification() {
 
     // 5. Simulate a modification
     console.log('5️⃣ Simulating booking modification...');
-    const modifiedBooking = await prisma.booking.update({
+    const modifiedBooking = await db.booking.update({
       where: { id: booking.id },
       data: {
         bookingTime: '11:00 PM',
@@ -95,7 +94,7 @@ async function testBookingModification() {
     });
 
     // 6. Create modification record
-    const modification = await prisma.bookingModification.create({
+    const modification = await db.bookingModification.create({
       data: {
         bookingId: booking.id,
         modifiedBy: 'admin@backroomleeds.co.uk',
@@ -119,7 +118,7 @@ async function testBookingModification() {
 
     // 7. Verify modification history
     console.log('6️⃣ Verifying modification history...');
-    const modifications = await prisma.bookingModification.findMany({
+    const modifications = await db.bookingModification.findMany({
       where: { bookingId: booking.id },
       orderBy: { modifiedAt: 'desc' }
     });
@@ -147,7 +146,7 @@ async function testBookingModification() {
   } catch (error) {
     console.error('❌ Test failed:', error);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

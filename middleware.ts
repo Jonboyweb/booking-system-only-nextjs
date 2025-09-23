@@ -1,25 +1,94 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { validateAdminToken } from '@/src/middleware/auth';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  // Handle preflight OPTIONS requests for API routes
+  if (request.nextUrl.pathname.startsWith('/api/') && request.method === 'OPTIONS') {
+    // Simple CORS preflight response
+    const response = new NextResponse(null, { status: 204 });
+    const origin = request.headers.get('origin');
+
+    // Set CORS headers for preflight
+    if (origin) {
+      response.headers.set('Access-Control-Allow-Origin', origin);
+      response.headers.set('Vary', 'Origin');
+    }
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    response.headers.set('Access-Control-Max-Age', '86400');
+
+    return response;
+  }
+
   // Check if it's an admin route
   if (request.nextUrl.pathname.startsWith('/admin')) {
-    // Allow access to login page and auth API routes
-    if (request.nextUrl.pathname === '/admin/login' || 
-        request.nextUrl.pathname.startsWith('/api/admin/auth/')) {
+    // Allow access to login page and login API endpoint only
+    if (request.nextUrl.pathname === '/admin/login' ||
+        request.nextUrl.pathname === '/api/admin/auth/login') {
       return NextResponse.next();
     }
 
     // Check for admin token
     const token = request.cookies.get('admin-token')?.value;
-    
+
     if (!token) {
-      // Redirect to login if no token
+      // API routes should return 401, pages should redirect to login
+      if (request.nextUrl.pathname.startsWith('/api/')) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }
 
-    // For now, we just check if token exists
-    // Full JWT verification should be done in API routes, not Edge Runtime
-    // The presence of the httpOnly cookie is sufficient for basic protection
+    // Perform lightweight token validation (Edge Runtime compatible)
+    const isValid = await validateAdminToken(token);
+
+    if (!isValid) {
+      // Clear invalid token
+      const response = request.nextUrl.pathname.startsWith('/api/')
+        ? NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 })
+        : NextResponse.redirect(new URL('/admin/login', request.url));
+
+      response.cookies.delete('admin-token');
+      return response;
+    }
+
+    // Token is valid, continue to the route
+    // Full JWT verification with database checks happens in API routes
+    return NextResponse.next();
+  }
+
+  // Check if it's an admin API route that doesn't start with /admin
+  if (request.nextUrl.pathname.startsWith('/api/admin/')) {
+    // Allow login endpoint
+    if (request.nextUrl.pathname === '/api/admin/auth/login') {
+      return NextResponse.next();
+    }
+
+    // Check for token in cookie or Authorization header
+    const token = request.cookies.get('admin-token')?.value ||
+                  request.headers.get('authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Validate token
+    const isValid = await validateAdminToken(token);
+
+    if (!isValid) {
+      return NextResponse.json(
+        { error: 'Invalid or expired token' },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.next();
   }
 
@@ -27,5 +96,8 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/admin/:path*'
+  matcher: [
+    '/admin/:path*',
+    '/api/:path*'
+  ]
 };

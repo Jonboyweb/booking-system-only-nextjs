@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,10 +28,10 @@ export async function GET(request: NextRequest) {
           const bookingDate = new Date(date);
           
           // Get all tables
-          const tables = await prisma.table.findMany();
-          
+          const tables = await db.table.findMany();
+
           // Get all bookings for the date
-          const bookings = await prisma.booking.findMany({
+          const bookings = await db.booking.findMany({
             where: {
               bookingDate,
               status: {

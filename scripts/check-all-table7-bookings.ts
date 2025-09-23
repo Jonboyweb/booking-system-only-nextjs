@@ -1,13 +1,12 @@
-import { PrismaClient } from '../lib/generated/prisma';
+import { db } from '../lib/db';
 
-const prisma = new PrismaClient();
 
 async function checkTable7Bookings() {
   console.log('Checking all Table 7 bookings for September 28, 2025...\n');
   
   try {
     // Get table 7
-    const table7 = await prisma.table.findFirst({
+    const table7 = await db.table.findFirst({
       where: { tableNumber: 7 }
     });
     
@@ -19,7 +18,7 @@ async function checkTable7Bookings() {
     // Get ALL bookings for table 7 on September 28
     const sept28Date = new Date('2025-09-28');
     
-    const bookings = await prisma.booking.findMany({
+    const bookings = await db.booking.findMany({
       where: {
         tableId: table7.id,
         bookingDate: sept28Date
@@ -76,7 +75,7 @@ async function checkTable7Bookings() {
   } catch (error) {
     console.error('Error:', error);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

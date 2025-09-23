@@ -1,8 +1,7 @@
 #!/usr/bin/env npx tsx
-import { PrismaClient } from '../lib/generated/prisma';
+import { db } from '../lib/db';
 import { verifyPassword } from '../src/lib/auth/password';
 
-const prisma = new PrismaClient();
 
 async function testAdminLogin() {
   console.log('Testing Admin Login System');
@@ -11,7 +10,7 @@ async function testAdminLogin() {
   try {
     // 1. Check if admin user exists
     console.log('1. Checking if admin user exists...');
-    const adminUser = await prisma.adminUser.findUnique({
+    const adminUser = await db.adminUser.findUnique({
       where: { email: 'admin@backroomleeds.co.uk' }
     });
 
@@ -76,7 +75,7 @@ async function testAdminLogin() {
   } catch (error) {
     console.error('❌ Test failed with error:', error);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

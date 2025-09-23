@@ -69,11 +69,11 @@ export function generateTimeSlots(date: Date): string[] {
   const hours = getOperatingHours(date);
   const slots: string[] = [];
   
-  let startHour = parseInt(hours.startTime.split(':')[0]);
-  let startMinute = parseInt(hours.startTime.split(':')[1]);
+  const startHour = parseInt(hours.startTime.split(':')[0]);
+  const startMinute = parseInt(hours.startTime.split(':')[1]);
   
   let endHour = parseInt(hours.endTime.split(':')[0]);
-  let endMinute = parseInt(hours.endTime.split(':')[1]);
+  const endMinute = parseInt(hours.endTime.split(':')[1]);
   
   // Handle next day scenario (e.g., 23:00 to 02:00)
   if (endHour < startHour) {

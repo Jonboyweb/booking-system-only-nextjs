@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/lib/generated/prisma';
+import { db } from '@/lib/db';
 import { getAuthUser } from '@/src/middleware/auth';
 import sgMail from '@sendgrid/mail';
 import { generateRefundConfirmationEmail } from '@/src/lib/email/templates/refund-confirmation';
 
-const prisma = new PrismaClient();
 
 // Helper function to get and validate API key
 function getApiKey(): string | undefined {
@@ -46,7 +45,7 @@ export async function POST(
     const { refundAmount, refundId, reason } = body;
 
     // Fetch booking with all necessary data
-    const booking = await prisma.booking.findUnique({
+    const booking = await db.booking.findUnique({
       where: { id },
       include: {
         customer: true,
@@ -135,7 +134,7 @@ export async function POST(
     console.log(`Refund confirmation email sent to ${booking.customer.email} for booking ${booking.bookingReference}`);
 
     // Update modification record to mark email as sent
-    await prisma.bookingModification.updateMany({
+    await db.bookingModification.updateMany({
       where: {
         bookingId: booking.id,
         reason: {

@@ -1,8 +1,7 @@
 #!/usr/bin/env npx tsx
-import { PrismaClient } from '../lib/generated/prisma';
+import { db } from '../lib/db';
 import { hashPassword } from '../src/lib/auth/password';
 
-const prisma = new PrismaClient();
 
 async function createAdminUser() {
   console.log('Creating default admin user for The Backroom Leeds');
@@ -10,7 +9,7 @@ async function createAdminUser() {
 
   try {
     // Check if admin already exists
-    const existingAdmin = await prisma.adminUser.findUnique({
+    const existingAdmin = await db.adminUser.findUnique({
       where: { email: 'admin@backroomleeds.co.uk' }
     });
 
@@ -19,7 +18,7 @@ async function createAdminUser() {
       
       // Update password to ensure it's correct
       const passwordHash = await hashPassword('admin123');
-      await prisma.adminUser.update({
+      await db.adminUser.update({
         where: { email: 'admin@backroomleeds.co.uk' },
         data: { 
           passwordHash,
@@ -33,7 +32,7 @@ async function createAdminUser() {
       // Create new admin user
       const passwordHash = await hashPassword('admin123');
       
-      const adminUser = await prisma.adminUser.create({
+      const adminUser = await db.adminUser.create({
         data: {
           email: 'admin@backroomleeds.co.uk',
           name: 'Admin User',
@@ -52,7 +51,7 @@ async function createAdminUser() {
   } catch (error) {
     console.error('\n❌ Error creating admin user:', error);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

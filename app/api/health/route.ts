@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/db';
 
 export async function GET() {
   try {
-    await prisma.$queryRaw`SELECT 1`;
-    
-    const tableCount = await prisma.table.count();
-    const bookingCount = await prisma.booking.count();
+    await db.$queryRaw`SELECT 1`;
+
+    const tableCount = await db.table.count();
+    const bookingCount = await db.booking.count();
     
     return NextResponse.json({
       status: 'healthy',
