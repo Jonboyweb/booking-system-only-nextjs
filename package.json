@@ -17,7 +17,13 @@
     "pm2:reload": "pm2 reload booking-system",
     "pm2:delete": "pm2 delete booking-system",
     "pm2:logs": "pm2 logs booking-system",
-    "pm2:monit": "pm2 monit"
+    "pm2:monit": "pm2 monit",
+    "agent": "tsx scripts/run-agent.ts",
+    "agent:security": "tsx scripts/run-agent.ts security-audit",
+    "agent:review": "tsx scripts/run-agent.ts code-review",
+    "agent:performance": "tsx scripts/run-agent.ts performance",
+    "agent:production": "tsx scripts/run-agent.ts production-ready",
+    "agent:quick": "tsx scripts/run-agent.ts quick-security"
   },
   "keywords": [],
   "author": "",
