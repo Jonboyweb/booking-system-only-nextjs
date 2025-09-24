@@ -42,11 +42,11 @@ export default function FloorPlanWithObjects({
   const floorTables = tables.filter(t => t.floor === floor);
   const floorObjects = venueObjects.filter(o => o.floor === floor);
 
-  // Fetch venue objects on mount
+  // Fetch venue objects on mount - fetch all objects once, not per floor
   useEffect(() => {
     const fetchVenueObjects = async () => {
       try {
-        const response = await fetch(`/api/venue-objects?floor=${floor}`);
+        const response = await fetch(`/api/venue-objects`);
         if (response.ok) {
           const data = await response.json();
           setVenueObjects(data);
@@ -59,7 +59,7 @@ export default function FloorPlanWithObjects({
     };
 
     fetchVenueObjects();
-  }, [floor]);
+  }, []); // Empty dependency array - fetch only once on mount
 
   const getTableStatus = (table: Table) => {
     if (bookedTables.includes(table.tableNumber)) return 'booked';

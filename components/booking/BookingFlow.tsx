@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import DateTimeSelector from './DateTimeSelector';
-import FloorPlan from './FloorPlan';
+import FloorPlanWithObjects from './FloorPlanWithObjects';
 import DrinkPackageSelector from './DrinkPackageSelector';
 import CustomerDetailsForm from './CustomerDetailsForm';
 import { BookingFormData, BookingStep, Table, DrinkPackage, Spirit, Champagne } from '@/types/booking';
@@ -276,7 +276,7 @@ export default function BookingFlow() {
                 </span>
               </div>
             )}
-            <FloorPlan
+            <FloorPlanWithObjects
               floor="UPSTAIRS"
               tables={tables}
               selectedTable={selectedTable}
@@ -286,7 +286,7 @@ export default function BookingFlow() {
               bookedTables={bookedTables}
               blockedTables={blockedTables}
             />
-            <FloorPlan
+            <FloorPlanWithObjects
               floor="DOWNSTAIRS"
               tables={tables}
               selectedTable={selectedTable}
