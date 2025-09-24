@@ -246,9 +246,37 @@ model TableBlock {
   @@map("table_blocks")
 }
 
+model VenueObject {
+  id          String           @id @default(uuid())
+  type        VenueObjectType
+  description String
+  floor       Floor
+  positionX   Int              @default(50)
+  positionY   Int              @default(50)
+  width       Int              @default(100)
+  height      Int              @default(80)
+  color       String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([floor])
+  @@map("venue_objects")
+}
+
 enum Floor {
   UPSTAIRS
   DOWNSTAIRS
+}
+
+enum VenueObjectType {
+  BAR
+  DJ_BOOTH
+  PARTITION
+  DANCE_FLOOR
+  EXIT
+  STAIRCASE
+  TOILETS
+  CUSTOM
 }
 
 enum BookingStatus {

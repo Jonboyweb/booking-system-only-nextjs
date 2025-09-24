@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Eye, MapPin } from 'lucide-react';
-import FloorPlanEditor from '@/components/admin/FloorPlanEditor';
+import FloorPlanEditorWithObjects from '@/components/admin/FloorPlanEditorWithObjects';
 import FloorPlan from '@/components/booking/FloorPlan';
 
 interface Table {
@@ -22,26 +22,50 @@ interface Table {
   height: number;
 }
 
+interface VenueObject {
+  id: string;
+  type: 'BAR' | 'DJ_BOOTH' | 'PARTITION' | 'DANCE_FLOOR' | 'EXIT' | 'STAIRCASE' | 'TOILETS' | 'CUSTOM';
+  description: string;
+  floor: 'UPSTAIRS' | 'DOWNSTAIRS';
+  positionX: number;
+  positionY: number;
+  width: number;
+  height: number;
+  color?: string;
+}
+
 export default function FloorPlanPage() {
   const [tables, setTables] = useState<Table[]>([]);
+  const [venueObjects, setVenueObjects] = useState<VenueObject[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFloor, setSelectedFloor] = useState<'UPSTAIRS' | 'DOWNSTAIRS'>('UPSTAIRS');
   const [previewMode, setPreviewMode] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const fetchTables = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
-      const response = await fetch('/api/admin/tables');
-      if (response.ok) {
-        const data = await response.json();
+      const [tablesResponse, objectsResponse] = await Promise.all([
+        fetch('/api/admin/tables'),
+        fetch('/api/admin/venue-objects')
+      ]);
+
+      if (tablesResponse.ok) {
+        const data = await tablesResponse.json();
         setTables(data);
       } else {
         setMessage({ type: 'error', text: 'Failed to load tables' });
         setTimeout(() => setMessage(null), 5000);
       }
+
+      if (objectsResponse.ok) {
+        const data = await objectsResponse.json();
+        setVenueObjects(data);
+      } else {
+        console.warn('Failed to load venue objects');
+      }
     } catch (error) {
-      console.error('Error fetching tables:', error);
-      setMessage({ type: 'error', text: 'Failed to load tables' });
+      console.error('Error fetching data:', error);
+      setMessage({ type: 'error', text: 'Failed to load floor plan data' });
       setTimeout(() => setMessage(null), 5000);
     } finally {
       setLoading(false);
@@ -49,8 +73,8 @@ export default function FloorPlanPage() {
   }, []);
 
   useEffect(() => {
-    fetchTables();
-  }, [fetchTables]);
+    fetchData();
+  }, [fetchData]);
 
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
@@ -119,18 +143,87 @@ export default function FloorPlanPage() {
     }
   };
 
-  const handleSaveAll = async () => {
+  const handleVenueObjectUpdate = async (updatedObject: VenueObject) => {
     try {
-      const response = await fetch('/api/admin/tables', {
-        method: 'PUT',
+      const response = await fetch(`/api/admin/venue-objects/${updatedObject.id}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tables })
+        body: JSON.stringify(updatedObject)
       });
 
       if (response.ok) {
+        const data = await response.json();
+        setVenueObjects(prev => prev.map(o => o.id === data.id ? data : o));
+        showMessage('success', `${updatedObject.description} updated`);
+      } else {
+        showMessage('error', 'Failed to update venue object');
+      }
+    } catch (error) {
+      console.error('Error updating venue object:', error);
+      showMessage('error', 'Failed to update venue object');
+    }
+  };
+
+  const handleVenueObjectAdd = async (newObject: Partial<VenueObject>) => {
+    try {
+      const response = await fetch('/api/admin/venue-objects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newObject)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setVenueObjects(prev => [...prev, data]);
+        showMessage('success', `${newObject.description} added`);
+      } else {
+        const error = await response.json();
+        showMessage('error', error.error || 'Failed to add venue object');
+      }
+    } catch (error) {
+      console.error('Error adding venue object:', error);
+      showMessage('error', 'Failed to add venue object');
+    }
+  };
+
+  const handleVenueObjectDelete = async (objectId: string) => {
+    try {
+      const response = await fetch(`/api/admin/venue-objects/${objectId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        setVenueObjects(prev => prev.filter(o => o.id !== objectId));
+        showMessage('success', 'Venue object deleted successfully');
+      } else {
+        const error = await response.json();
+        showMessage('error', error.error || 'Failed to delete venue object');
+      }
+    } catch (error) {
+      console.error('Error deleting venue object:', error);
+      showMessage('error', 'Failed to delete venue object');
+    }
+  };
+
+  const handleSaveAll = async () => {
+    try {
+      const [tablesResponse, objectsResponse] = await Promise.all([
+        fetch('/api/admin/tables', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tables })
+        }),
+        fetch('/api/admin/venue-objects', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ venueObjects })
+        })
+      ]);
+
+      if (tablesResponse.ok && objectsResponse.ok) {
         showMessage('success', 'All changes saved successfully');
       } else {
-        showMessage('error', 'Failed to save changes');
+        showMessage('error', 'Failed to save some changes');
       }
     } catch (error) {
       console.error('Error saving changes:', error);
@@ -230,12 +323,16 @@ export default function FloorPlanPage() {
             />
           </div>
         ) : (
-          <FloorPlanEditor
+          <FloorPlanEditorWithObjects
             floor={selectedFloor}
             tables={tables}
+            venueObjects={venueObjects}
             onTableUpdate={handleTableUpdate}
             onTableAdd={handleTableAdd}
             onTableDelete={handleTableDelete}
+            onVenueObjectUpdate={handleVenueObjectUpdate}
+            onVenueObjectAdd={handleVenueObjectAdd}
+            onVenueObjectDelete={handleVenueObjectDelete}
             onSaveAll={handleSaveAll}
             previewMode={false}
           />
@@ -264,6 +361,12 @@ export default function FloorPlanPage() {
           <h3 className="text-sm font-medium text-gray-600">Total Capacity</h3>
           <p className="text-2xl font-bold text-gray-900">
             {tables.reduce((sum, t) => sum + t.capacityMax, 0)}
+          </p>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <h3 className="text-sm font-medium text-gray-600">Venue Objects</h3>
+          <p className="text-2xl font-bold text-purple-600">
+            {venueObjects.length}
           </p>
         </div>
       </div>

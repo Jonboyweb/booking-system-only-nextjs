@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Plus, Save, Edit2, Trash2, Move, Maximize2, ArrowUp } from 'lucide-react';
+import { Plus, Save, Edit2, Trash2, Move, Maximize2, ArrowUp, MapPin, Music, Grid3x3, Users, LogOut, Layers, Bath, Square } from 'lucide-react';
 
 interface Table {
   id: string;
@@ -20,12 +20,28 @@ interface Table {
   height: number;
 }
 
+interface VenueObject {
+  id: string;
+  type: 'BAR' | 'DJ_BOOTH' | 'PARTITION' | 'DANCE_FLOOR' | 'EXIT' | 'STAIRCASE' | 'TOILETS' | 'CUSTOM';
+  description: string;
+  floor: 'UPSTAIRS' | 'DOWNSTAIRS';
+  positionX: number;
+  positionY: number;
+  width: number;
+  height: number;
+  color?: string;
+}
+
 interface FloorPlanEditorProps {
   floor: 'UPSTAIRS' | 'DOWNSTAIRS';
   tables: Table[];
+  venueObjects: VenueObject[];
   onTableUpdate: (table: Table) => Promise<void>;
   onTableAdd: (table: Partial<Table>) => Promise<void>;
   onTableDelete: (tableId: string) => Promise<void>;
+  onVenueObjectUpdate: (object: VenueObject) => Promise<void>;
+  onVenueObjectAdd: (object: Partial<VenueObject>) => Promise<void>;
+  onVenueObjectDelete: (objectId: string) => Promise<void>;
   onSaveAll: () => Promise<void>;
   previewMode?: boolean;
 }
@@ -35,9 +51,13 @@ type ResizeHandle = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
 export default function FloorPlanEditor({
   floor,
   tables,
+  venueObjects,
   onTableUpdate,
   onTableAdd,
   onTableDelete,
+  onVenueObjectUpdate,
+  onVenueObjectAdd,
+  onVenueObjectDelete,
   onSaveAll,
   previewMode = false
 }: FloorPlanEditorProps) {
@@ -52,18 +72,33 @@ export default function FloorPlanEditor({
   const [initialResize, setInitialResize] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [editingCapacity, setEditingCapacity] = useState<{ tableId: string, field: 'min' | 'max' } | null>(null);
   const [capacityValue, setCapacityValue] = useState('');
+
+  // Venue object states
+  const [selectedObject, setSelectedObject] = useState<VenueObject | null>(null);
+  const [draggedObject, setDraggedObject] = useState<VenueObject | null>(null);
+  const [resizingObject, setResizingObject] = useState<VenueObject | null>(null);
+  const [editingObject, setEditingObject] = useState<VenueObject | null>(null);
+  const [showAddObjectForm, setShowAddObjectForm] = useState(false);
+  const [newObjectType, setNewObjectType] = useState<VenueObject['type']>('CUSTOM');
+
   const svgRef = useRef<SVGSVGElement>(null);
 
   const floorTables = tables.filter(t => t.floor === floor);
+  const floorObjects = venueObjects.filter(o => o.floor === floor);
 
-  // Keyboard navigation
+  // Keyboard navigation for both tables and objects
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!selectedTable || previewMode) return;
+      if (previewMode) return;
+
+      const selected = selectedTable || selectedObject;
+      if (!selected) return;
 
       const step = e.shiftKey ? 10 : 1;
       let updated = false;
-      const updatedTable = { ...selectedTable };
+
+      if (selectedTable) {
+        const updatedTable = { ...selectedTable };
 
       switch(e.key) {
         case 'ArrowUp':
@@ -88,16 +123,48 @@ export default function FloorPlanEditor({
           break;
       }
 
-      if (updated) {
-        onTableUpdate(updatedTable);
-        setSelectedTable(updatedTable);
-        setUnsavedChanges(true);
+        if (updated) {
+          onTableUpdate(updatedTable);
+          setSelectedTable(updatedTable);
+          setUnsavedChanges(true);
+        }
+      } else if (selectedObject) {
+        const updatedObject = { ...selectedObject };
+
+        switch(e.key) {
+          case 'ArrowUp':
+            e.preventDefault();
+            updatedObject.positionY = Math.max(0, updatedObject.positionY - step);
+            updated = true;
+            break;
+          case 'ArrowDown':
+            e.preventDefault();
+            updatedObject.positionY = Math.min(450 - updatedObject.height, updatedObject.positionY + step);
+            updated = true;
+            break;
+          case 'ArrowLeft':
+            e.preventDefault();
+            updatedObject.positionX = Math.max(0, updatedObject.positionX - step);
+            updated = true;
+            break;
+          case 'ArrowRight':
+            e.preventDefault();
+            updatedObject.positionX = Math.min(650 - updatedObject.width, updatedObject.positionX + step);
+            updated = true;
+            break;
+        }
+
+        if (updated) {
+          onVenueObjectUpdate(updatedObject);
+          setSelectedObject(updatedObject);
+          setUnsavedChanges(true);
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedTable, onTableUpdate, previewMode]);
+  }, [selectedTable, selectedObject, onTableUpdate, onVenueObjectUpdate, previewMode]);
 
   const handleMouseDown = (e: React.MouseEvent<SVGRectElement>, table: Table) => {
     if (previewMode) return;
@@ -277,6 +344,52 @@ export default function FloorPlanEditor({
     if (!table.isActive) return '#666666';
     if (table.isVip) return '#D4AF37';
     return '#2E5F45';
+  };
+
+  const getObjectColor = (object: VenueObject) => {
+    if (object.color) return object.color;
+
+    switch (object.type) {
+      case 'BAR':
+        return '#3E2723'; // Dark wood
+      case 'DJ_BOOTH':
+        return '#424242'; // Dark gray
+      case 'DANCE_FLOOR':
+        return '#1A237E'; // Dark pattern
+      case 'EXIT':
+        return '#2E7D32'; // Green
+      case 'STAIRCASE':
+        return '#5D4037'; // Brown
+      case 'TOILETS':
+        return '#1565C0'; // Blue
+      case 'PARTITION':
+        return '#616161'; // Gray semi-transparent
+      case 'CUSTOM':
+      default:
+        return '#757575'; // Neutral gray
+    }
+  };
+
+  const getObjectIcon = (type: VenueObject['type']) => {
+    switch (type) {
+      case 'BAR':
+        return MapPin;
+      case 'DJ_BOOTH':
+        return Music;
+      case 'PARTITION':
+        return Grid3x3;
+      case 'DANCE_FLOOR':
+        return Users;
+      case 'EXIT':
+        return LogOut;
+      case 'STAIRCASE':
+        return Layers;
+      case 'TOILETS':
+        return Bath;
+      case 'CUSTOM':
+      default:
+        return Square;
+    }
   };
 
   const handleCapacityClick = (e: React.MouseEvent, tableId: string, field: 'min' | 'max', currentValue: number) => {
