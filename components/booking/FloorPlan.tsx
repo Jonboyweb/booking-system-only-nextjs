@@ -46,26 +46,44 @@ export default function FloorPlan({
     }
   };
   
-  // Table positions for visual layout (simplified)
-  const tablePositions: Record<number, { x: number; y: number; width: number; height: number }> = {
-    // Upstairs tables
-    10: { x: 50, y: 50, width: 120, height: 80 },
-    2: { x: 200, y: 50, width: 100, height: 80 },
-    3: { x: 350, y: 50, width: 100, height: 80 },
-    4: { x: 500, y: 50, width: 100, height: 80 },
-    5: { x: 50, y: 180, width: 100, height: 80 },
-    6: { x: 200, y: 180, width: 100, height: 80 },
-    7: { x: 350, y: 180, width: 100, height: 80 },
-    8: { x: 500, y: 180, width: 100, height: 80 },
-    9: { x: 50, y: 310, width: 120, height: 80 },
-    1: { x: 450, y: 310, width: 150, height: 100 }, // VIP booth
-    // Downstairs tables
-    11: { x: 50, y: 50, width: 100, height: 80 },
-    12: { x: 200, y: 50, width: 100, height: 80 },
-    13: { x: 350, y: 50, width: 100, height: 80 },
-    14: { x: 500, y: 50, width: 100, height: 80 },
-    15: { x: 100, y: 180, width: 120, height: 80 },
-    16: { x: 250, y: 180, width: 120, height: 80 },
+  // Use positions from database if available, otherwise use defaults
+  const getTablePosition = (table: Table): { x: number; y: number; width: number; height: number } => {
+    if ('positionX' in table && 'positionY' in table && 'width' in table && 'height' in table) {
+      // Ensure all values are defined and are numbers
+      if (table.positionX !== undefined && table.positionY !== undefined &&
+          table.width !== undefined && table.height !== undefined) {
+        return {
+          x: table.positionX,
+          y: table.positionY,
+          width: table.width,
+          height: table.height
+        };
+      }
+    }
+
+    // Fallback positions for backward compatibility
+    const fallbackPositions: Record<number, { x: number; y: number; width: number; height: number }> = {
+      // Upstairs tables
+      10: { x: 50, y: 50, width: 120, height: 80 },
+      2: { x: 200, y: 50, width: 100, height: 80 },
+      3: { x: 350, y: 50, width: 100, height: 80 },
+      4: { x: 500, y: 50, width: 100, height: 80 },
+      5: { x: 50, y: 180, width: 100, height: 80 },
+      6: { x: 200, y: 180, width: 100, height: 80 },
+      7: { x: 350, y: 180, width: 100, height: 80 },
+      8: { x: 500, y: 180, width: 100, height: 80 },
+      9: { x: 50, y: 310, width: 120, height: 80 },
+      1: { x: 450, y: 310, width: 150, height: 100 }, // VIP booth
+      // Downstairs tables
+      11: { x: 50, y: 50, width: 100, height: 80 },
+      12: { x: 200, y: 50, width: 100, height: 80 },
+      13: { x: 350, y: 50, width: 100, height: 80 },
+      14: { x: 500, y: 50, width: 100, height: 80 },
+      15: { x: 100, y: 180, width: 120, height: 80 },
+      16: { x: 250, y: 180, width: 120, height: 80 },
+    };
+
+    return fallbackPositions[table.tableNumber] || { x: 50, y: 50, width: 100, height: 80 };
   };
   
   return (
@@ -109,8 +127,7 @@ export default function FloorPlan({
         
         {/* Render tables */}
         {floorTables.map(table => {
-          const pos = tablePositions[table.tableNumber];
-          if (!pos) return null;
+          const pos = getTablePosition(table);
           
           const status = getTableStatus(table);
           const isHovered = hoveredTable === table.tableNumber;

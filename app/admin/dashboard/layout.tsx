@@ -22,6 +22,7 @@ export default function AdminLayout({
     { href: '/admin/dashboard', label: 'Overview', icon: '📊' },
     { href: '/admin/dashboard/bookings', label: 'Bookings', icon: '📅' },
     { href: '/admin/dashboard/tables', label: 'Tables', icon: '🪑' },
+    { href: '/admin/dashboard/floor-plan', label: 'Floor Plan', icon: '🗺️' },
     { href: '/admin/dashboard/customers', label: 'Customers', icon: '👥' },
     { href: '/admin/dashboard/analytics', label: 'Analytics', icon: '📈' },
     { href: '/admin/dashboard/settings', label: 'Settings', icon: '⚙️' },

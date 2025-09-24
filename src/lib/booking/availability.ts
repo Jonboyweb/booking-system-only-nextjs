@@ -137,6 +137,10 @@ export async function getAvailableTablesForDateTime(
             isVip: false,
             isActive: true,
             canCombineWith: [],
+            positionX: table15.positionX,
+            positionY: table15.positionY,
+            width: (table15.width || 120) + (table16.width || 120),
+            height: table15.height || 80,
             createdAt: table15.createdAt,
             updatedAt: table15.updatedAt
           });

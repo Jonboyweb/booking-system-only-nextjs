@@ -8,6 +8,11 @@ export interface Table {
   features: string[];
   isVip: boolean;
   canCombineWith: number[];
+  isActive?: boolean;
+  positionX?: number;
+  positionY?: number;
+  width?: number;
+  height?: number;
 }
 
 export interface BookingFormData {
