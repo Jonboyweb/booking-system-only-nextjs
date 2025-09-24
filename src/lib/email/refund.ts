@@ -1,4 +1,5 @@
 import sgMail from '@sendgrid/mail';
+import nodemailer from 'nodemailer';
 import { generateRefundConfirmationEmail } from './templates/refund-confirmation';
 
 const FROM_NAME = 'The Backroom Leeds';
@@ -15,6 +16,11 @@ function getApiKey(): string | undefined {
 // Helper function to get from email
 function getFromEmail(): string {
   return process.env.EMAIL_FROM || process.env.SENDGRID_FROM_EMAIL || 'noreply@thebackroomleeds.com';
+}
+
+// Helper function to check if we should use MailHog
+function useMailHog(): boolean {
+  return process.env.EMAIL_PROVIDER === 'mailhog';
 }
 
 interface RefundEmailData {
@@ -44,12 +50,6 @@ interface RefundEmailData {
 }
 
 export async function sendRefundConfirmationEmail(data: RefundEmailData): Promise<boolean> {
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    console.error('Cannot send refund email: SENDGRID_API_KEY is not configured');
-    return false;
-  }
-
   const email = data.booking.email;
   if (!email) {
     console.error('Cannot send refund email: No email address provided');
@@ -70,6 +70,36 @@ export async function sendRefundConfirmationEmail(data: RefundEmailData): Promis
       refundDate: data.refundDate || new Date()
     });
 
+    // Use MailHog if configured
+    if (useMailHog()) {
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST || 'localhost',
+        port: parseInt(process.env.SMTP_PORT || '1025'),
+        secure: false,
+        tls: {
+          rejectUnauthorized: false
+        }
+      });
+
+      await transporter.sendMail({
+        from: `"${FROM_NAME}" <${getFromEmail()}>`,
+        to: email,
+        subject,
+        text,
+        html
+      });
+
+      console.log(`Refund confirmation email sent to ${email} via MailHog for booking ${data.booking.reference_number || data.booking.bookingReference}`);
+      return true;
+    }
+
+    // Use SendGrid
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      console.error('Cannot send refund email: SENDGRID_API_KEY is not configured and not using MailHog');
+      return false;
+    }
+
     const msg = {
       to: email,
       from: {
@@ -82,7 +112,7 @@ export async function sendRefundConfirmationEmail(data: RefundEmailData): Promis
     };
 
     await sgMail.send(msg);
-    console.log(`Refund confirmation email sent to ${email} for booking ${data.booking.reference_number || data.booking.bookingReference}`);
+    console.log(`Refund confirmation email sent to ${email} via SendGrid for booking ${data.booking.reference_number || data.booking.bookingReference}`);
     return true;
   } catch (error) {
     console.error('Error sending refund confirmation email:', error);

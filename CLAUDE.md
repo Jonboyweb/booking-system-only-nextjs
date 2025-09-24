@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Agents
+
+Use appropriate agents in the .claude/agents folder for completeing tasks in this project
+
 ## Project Overview
 
 Prohibition-themed nightclub table booking system for The Backroom Leeds. Built with Next.js 15 App Router, featuring interactive floor plans, real-time availability, Stripe payments, and comprehensive admin dashboard.
