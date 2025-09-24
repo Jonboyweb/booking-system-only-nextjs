@@ -272,14 +272,30 @@ export default function FloorPlanPage() {
       {!previewMode && (
         <div className="bg-blue-50 rounded-lg p-4">
           <h3 className="font-semibold text-blue-900 mb-2">How to use the Floor Plan Editor:</h3>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Drag and drop tables to reposition them on the floor plan</li>
-            <li>• Click on a table to select it and view/edit its properties</li>
-            <li>• Use the &quot;Add Table&quot; button to create new tables</li>
-            <li>• Changes are saved automatically when you move tables</li>
-            <li>• Toggle between floors using the buttons above</li>
-            <li>• Use &quot;Preview Mode&quot; to see how customers will view the floor plan</li>
-          </ul>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-medium text-blue-900 mb-1">Basic Operations:</h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• Click on a table to select it and view its properties</li>
+                <li>• Use the &quot;Add Table&quot; button to create new tables</li>
+                <li>• Toggle between floors using the buttons above</li>
+                <li>• Use &quot;Preview Mode&quot; to see the customer view</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium text-blue-900 mb-1">Table Editing:</h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• <strong>Move:</strong> Drag and drop tables to reposition</li>
+                <li>• <strong>Resize:</strong> Drag the white handles on selected tables</li>
+                <li>• <strong>Precise Move:</strong> Use arrow keys (hold Shift for 10px steps)</li>
+                <li>• <strong>Edit Capacity:</strong> Click on capacity numbers to edit inline</li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-3 text-sm text-blue-700 bg-blue-100 rounded p-2">
+            <strong>Tips:</strong> Tables have a minimum size of 50x50 pixels. All changes are saved automatically.
+            Press ESC to cancel inline editing. Selected tables show white borders with resize handles.
+          </div>
         </div>
       )}
     </div>

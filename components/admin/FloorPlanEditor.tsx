@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { Plus, Save, Edit2, Trash2, Move } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Plus, Save, Edit2, Trash2, Move, Maximize2, ArrowUp } from 'lucide-react';
 
 interface Table {
   id: string;
@@ -30,6 +30,8 @@ interface FloorPlanEditorProps {
   previewMode?: boolean;
 }
 
+type ResizeHandle = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
+
 export default function FloorPlanEditor({
   floor,
   tables,
@@ -45,9 +47,57 @@ export default function FloorPlanEditor({
   const [editingTable, setEditingTable] = useState<Table | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const [resizingTable, setResizingTable] = useState<Table | null>(null);
+  const [resizeHandle, setResizeHandle] = useState<ResizeHandle | null>(null);
+  const [initialResize, setInitialResize] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [editingCapacity, setEditingCapacity] = useState<{ tableId: string, field: 'min' | 'max' } | null>(null);
+  const [capacityValue, setCapacityValue] = useState('');
   const svgRef = useRef<SVGSVGElement>(null);
 
   const floorTables = tables.filter(t => t.floor === floor);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedTable || previewMode) return;
+
+      const step = e.shiftKey ? 10 : 1;
+      let updated = false;
+      const updatedTable = { ...selectedTable };
+
+      switch(e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          updatedTable.positionY = Math.max(0, updatedTable.positionY - step);
+          updated = true;
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          updatedTable.positionY = Math.min(450 - updatedTable.height, updatedTable.positionY + step);
+          updated = true;
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          updatedTable.positionX = Math.max(0, updatedTable.positionX - step);
+          updated = true;
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          updatedTable.positionX = Math.min(650 - updatedTable.width, updatedTable.positionX + step);
+          updated = true;
+          break;
+      }
+
+      if (updated) {
+        onTableUpdate(updatedTable);
+        setSelectedTable(updatedTable);
+        setUnsavedChanges(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedTable, onTableUpdate, previewMode]);
 
   const handleMouseDown = (e: React.MouseEvent<SVGRectElement>, table: Table) => {
     if (previewMode) return;
@@ -61,31 +111,115 @@ export default function FloorPlanEditor({
       x: e.clientX - rect.left,
       y: e.clientY - rect.top
     });
+    setSelectedTable(table);
     e.preventDefault();
   };
 
+  const handleResizeMouseDown = (e: React.MouseEvent, table: Table, handle: ResizeHandle) => {
+    if (previewMode) return;
+    e.stopPropagation();
+    e.preventDefault();
+
+    setResizingTable(table);
+    setResizeHandle(handle);
+    setInitialResize({
+      x: e.clientX,
+      y: e.clientY,
+      width: table.width,
+      height: table.height
+    });
+    setSelectedTable(table);
+  };
+
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!draggedTable || !svgRef.current) return;
+    if (!svgRef.current) return;
 
     const svgRect = svgRef.current.getBoundingClientRect();
     const scale = 650 / svgRect.width; // SVG viewBox width / actual width
 
-    const newX = Math.max(0, Math.min(650 - draggedTable.width,
-      (e.clientX - svgRect.left - dragOffset.x) * scale));
-    const newY = Math.max(0, Math.min(450 - draggedTable.height,
-      (e.clientY - svgRect.top - dragOffset.y) * scale));
+    if (draggedTable) {
+      const newX = Math.max(0, Math.min(650 - draggedTable.width,
+        (e.clientX - svgRect.left - dragOffset.x) * scale));
+      const newY = Math.max(0, Math.min(450 - draggedTable.height,
+        (e.clientY - svgRect.top - dragOffset.y) * scale));
 
-    const updatedTable = {
-      ...draggedTable,
-      positionX: Math.round(newX),
-      positionY: Math.round(newY)
-    };
+      const updatedTable = {
+        ...draggedTable,
+        positionX: Math.round(newX),
+        positionY: Math.round(newY)
+      };
 
-    const index = floorTables.findIndex(t => t.id === draggedTable.id);
-    if (index !== -1) {
-      floorTables[index] = updatedTable;
-      setDraggedTable(updatedTable);
-      setUnsavedChanges(true);
+      const index = floorTables.findIndex(t => t.id === draggedTable.id);
+      if (index !== -1) {
+        floorTables[index] = updatedTable;
+        setDraggedTable(updatedTable);
+        setUnsavedChanges(true);
+      }
+    } else if (resizingTable && resizeHandle) {
+      const deltaX = (e.clientX - initialResize.x) * scale;
+      const deltaY = (e.clientY - initialResize.y) * scale;
+
+      let newWidth = initialResize.width;
+      let newHeight = initialResize.height;
+      let newX = resizingTable.positionX;
+      let newY = resizingTable.positionY;
+
+      // Handle resize based on which handle is being dragged
+      switch (resizeHandle) {
+        case 'e':
+          newWidth = Math.max(50, initialResize.width + deltaX);
+          break;
+        case 'w':
+          newWidth = Math.max(50, initialResize.width - deltaX);
+          newX = Math.min(resizingTable.positionX + resizingTable.width - 50, resizingTable.positionX + deltaX);
+          break;
+        case 's':
+          newHeight = Math.max(50, initialResize.height + deltaY);
+          break;
+        case 'n':
+          newHeight = Math.max(50, initialResize.height - deltaY);
+          newY = Math.min(resizingTable.positionY + resizingTable.height - 50, resizingTable.positionY + deltaY);
+          break;
+        case 'ne':
+          newWidth = Math.max(50, initialResize.width + deltaX);
+          newHeight = Math.max(50, initialResize.height - deltaY);
+          newY = Math.min(resizingTable.positionY + resizingTable.height - 50, resizingTable.positionY + deltaY);
+          break;
+        case 'nw':
+          newWidth = Math.max(50, initialResize.width - deltaX);
+          newHeight = Math.max(50, initialResize.height - deltaY);
+          newX = Math.min(resizingTable.positionX + resizingTable.width - 50, resizingTable.positionX + deltaX);
+          newY = Math.min(resizingTable.positionY + resizingTable.height - 50, resizingTable.positionY + deltaY);
+          break;
+        case 'se':
+          newWidth = Math.max(50, initialResize.width + deltaX);
+          newHeight = Math.max(50, initialResize.height + deltaY);
+          break;
+        case 'sw':
+          newWidth = Math.max(50, initialResize.width - deltaX);
+          newHeight = Math.max(50, initialResize.height + deltaY);
+          newX = Math.min(resizingTable.positionX + resizingTable.width - 50, resizingTable.positionX + deltaX);
+          break;
+      }
+
+      // Ensure table stays within bounds
+      newWidth = Math.min(newWidth, 650 - newX);
+      newHeight = Math.min(newHeight, 450 - newY);
+
+      const updatedTable = {
+        ...resizingTable,
+        positionX: Math.round(newX),
+        positionY: Math.round(newY),
+        width: Math.round(newWidth),
+        height: Math.round(newHeight)
+      };
+
+      const index = floorTables.findIndex(t => t.id === resizingTable.id);
+      if (index !== -1) {
+        floorTables[index] = updatedTable;
+        setResizingTable(updatedTable);
+        setUnsavedChanges(true);
+      }
     }
   };
 
@@ -94,6 +228,11 @@ export default function FloorPlanEditor({
       await onTableUpdate(draggedTable);
       setDraggedTable(null);
       setDragOffset({ x: 0, y: 0 });
+    }
+    if (resizingTable) {
+      await onTableUpdate(resizingTable);
+      setResizingTable(null);
+      setResizeHandle(null);
     }
   };
 
@@ -140,6 +279,74 @@ export default function FloorPlanEditor({
     return '#2E5F45';
   };
 
+  const handleCapacityClick = (e: React.MouseEvent, tableId: string, field: 'min' | 'max', currentValue: number) => {
+    e.stopPropagation();
+    if (previewMode) return;
+
+    setEditingCapacity({ tableId, field });
+    setCapacityValue(currentValue.toString());
+  };
+
+  const handleCapacitySave = async () => {
+    if (!editingCapacity) return;
+
+    const table = floorTables.find(t => t.id === editingCapacity.tableId);
+    if (!table) return;
+
+    const value = parseInt(capacityValue);
+    if (isNaN(value) || value < 1 || value > 20) {
+      setEditingCapacity(null);
+      return;
+    }
+
+    const updatedTable = {
+      ...table,
+      [editingCapacity.field === 'min' ? 'capacityMin' : 'capacityMax']: value
+    };
+
+    // Ensure min <= max
+    if (updatedTable.capacityMin > updatedTable.capacityMax) {
+      if (editingCapacity.field === 'min') {
+        updatedTable.capacityMax = updatedTable.capacityMin;
+      } else {
+        updatedTable.capacityMin = updatedTable.capacityMax;
+      }
+    }
+
+    await onTableUpdate(updatedTable);
+    setEditingCapacity(null);
+    setUnsavedChanges(false);
+  };
+
+  const renderResizeHandles = (table: Table) => {
+    if (selectedTable?.id !== table.id || previewMode) return null;
+
+    const handles: { type: ResizeHandle, cursor: string, x: number, y: number }[] = [
+      { type: 'nw', cursor: 'nw-resize', x: table.positionX, y: table.positionY },
+      { type: 'n', cursor: 'n-resize', x: table.positionX + table.width / 2, y: table.positionY },
+      { type: 'ne', cursor: 'ne-resize', x: table.positionX + table.width, y: table.positionY },
+      { type: 'e', cursor: 'e-resize', x: table.positionX + table.width, y: table.positionY + table.height / 2 },
+      { type: 'se', cursor: 'se-resize', x: table.positionX + table.width, y: table.positionY + table.height },
+      { type: 's', cursor: 's-resize', x: table.positionX + table.width / 2, y: table.positionY + table.height },
+      { type: 'sw', cursor: 'sw-resize', x: table.positionX, y: table.positionY + table.height },
+      { type: 'w', cursor: 'w-resize', x: table.positionX, y: table.positionY + table.height / 2 }
+    ];
+
+    return handles.map(handle => (
+      <circle
+        key={handle.type}
+        cx={handle.x}
+        cy={handle.y}
+        r="5"
+        fill="#FFF"
+        stroke="#D4AF37"
+        strokeWidth="2"
+        style={{ cursor: handle.cursor }}
+        onMouseDown={(e) => handleResizeMouseDown(e, table, handle.type)}
+      />
+    ));
+  };
+
   return (
     <div className="relative">
       {/* Controls */}
@@ -163,9 +370,19 @@ export default function FloorPlanEditor({
               </button>
             )}
           </div>
-          <div className="text-sm text-gray-600">
-            <Move className="w-4 h-4 inline mr-1" />
-            Drag tables to reposition
+          <div className="flex gap-4 text-sm text-gray-600">
+            <span>
+              <Move className="w-4 h-4 inline mr-1" />
+              Drag to move
+            </span>
+            <span>
+              <Maximize2 className="w-4 h-4 inline mr-1" />
+              Drag handles to resize
+            </span>
+            <span>
+              <ArrowUp className="w-4 h-4 inline mr-1" />
+              Arrow keys to move (Shift for 10px)
+            </span>
           </div>
         </div>
       )}
@@ -288,7 +505,7 @@ export default function FloorPlanEditor({
                 opacity={table.isActive ? 1 : 0.5}
                 className={previewMode ? '' : 'cursor-move hover:stroke-2'}
                 onMouseDown={(e) => handleMouseDown(e, table)}
-                onClick={() => !draggedTable && setSelectedTable(table)}
+                onClick={() => !draggedTable && !resizingTable && setSelectedTable(table)}
               />
 
               {/* Table number */}
@@ -315,16 +532,74 @@ export default function FloorPlanEditor({
                 </text>
               )}
 
-              {/* Capacity */}
-              <text
-                x={table.positionX + table.width / 2}
-                y={table.positionY + table.height / 2 + 25}
-                textAnchor="middle"
-                fill="#999"
-                className="text-xs pointer-events-none select-none"
-              >
-                {table.capacityMin}-{table.capacityMax}
-              </text>
+              {/* Capacity - Inline editable */}
+              {editingCapacity?.tableId === table.id ? (
+                <foreignObject
+                  x={table.positionX + table.width / 2 - 30}
+                  y={table.positionY + table.height / 2 + 15}
+                  width="60"
+                  height="20"
+                >
+                  <input
+                    type="number"
+                    value={capacityValue}
+                    onChange={(e) => setCapacityValue(e.target.value)}
+                    onBlur={handleCapacitySave}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleCapacitySave();
+                      if (e.key === 'Escape') setEditingCapacity(null);
+                    }}
+                    className="w-full text-center text-xs px-1 py-0 border border-gold rounded"
+                    min="1"
+                    max="20"
+                    autoFocus
+                  />
+                </foreignObject>
+              ) : (
+                <g>
+                  <rect
+                    x={table.positionX + table.width / 2 - 30}
+                    y={table.positionY + table.height / 2 + 15}
+                    width="60"
+                    height="18"
+                    fill="transparent"
+                    className={previewMode ? '' : 'cursor-pointer hover:fill-black hover:fill-opacity-20'}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <text
+                    x={table.positionX + table.width / 2 - 15}
+                    y={table.positionY + table.height / 2 + 28}
+                    textAnchor="middle"
+                    fill="#BBB"
+                    className={`text-xs ${previewMode ? 'pointer-events-none' : 'cursor-pointer hover:fill-white'}`}
+                    onClick={(e) => handleCapacityClick(e, table.id, 'min', table.capacityMin)}
+                  >
+                    {table.capacityMin}
+                  </text>
+                  <text
+                    x={table.positionX + table.width / 2}
+                    y={table.positionY + table.height / 2 + 28}
+                    textAnchor="middle"
+                    fill="#999"
+                    className="text-xs pointer-events-none"
+                  >
+                    -
+                  </text>
+                  <text
+                    x={table.positionX + table.width / 2 + 15}
+                    y={table.positionY + table.height / 2 + 28}
+                    textAnchor="middle"
+                    fill="#BBB"
+                    className={`text-xs ${previewMode ? 'pointer-events-none' : 'cursor-pointer hover:fill-white'}`}
+                    onClick={(e) => handleCapacityClick(e, table.id, 'max', table.capacityMax)}
+                  >
+                    {table.capacityMax}
+                  </text>
+                </g>
+              )}
+
+              {/* Resize handles */}
+              {renderResizeHandles(table)}
             </g>
           ))}
         </svg>
