@@ -57,6 +57,17 @@ export async function POST(request: NextRequest) {
       return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
     }
 
+    // Check if 2FA is enabled
+    if (adminUser.twoFactorEnabled) {
+      // Don't complete login, require 2FA verification
+      const response = NextResponse.json({
+        success: true,
+        requiresTwoFactor: true,
+        email: adminUser.email
+      });
+      return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
+    }
+
     // Update last login
     await db.adminUser.update({
       where: { id: adminUser.id },

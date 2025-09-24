@@ -63,8 +63,9 @@ export async function middleware(request: NextRequest) {
 
   // Check if it's an admin API route that doesn't start with /admin
   if (request.nextUrl.pathname.startsWith('/api/admin/')) {
-    // Allow login endpoint
-    if (request.nextUrl.pathname === '/api/admin/auth/login') {
+    // Allow login and 2FA verification endpoints without authentication
+    if (request.nextUrl.pathname === '/api/admin/auth/login' ||
+        request.nextUrl.pathname === '/api/admin/auth/2fa/verify') {
       return NextResponse.next();
     }
 
