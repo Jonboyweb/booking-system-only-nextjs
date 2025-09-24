@@ -174,15 +174,13 @@ export const listBookingsQuerySchema = z.object({
 
 // Booking reference validation
 export const bookingReferenceSchema = z.string()
-  .min(10, 'Invalid booking reference')
+  .min(9, 'Invalid booking reference')
   .max(20, 'Invalid booking reference')
-  .regex(/^BOOK-[A-Z0-9]+$/, 'Invalid booking reference format');
+  .regex(/^BR-[A-Z0-9]+$/, 'Invalid booking reference format');
 
-// ID parameter validation
+// ID parameter validation (UUID format)
 export const idParamSchema = z.string()
-  .regex(/^\d+$/, 'ID must be numeric')
-  .transform(Number)
-  .refine(val => val > 0, 'ID must be positive');
+  .uuid('ID must be a valid UUID');
 
 // Date parameter validation for availability checks
 export const dateParamSchema = z.string()

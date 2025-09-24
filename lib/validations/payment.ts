@@ -3,9 +3,9 @@ import { z } from 'zod';
 // Stripe payment intent creation schema
 export const createPaymentIntentSchema = z.object({
   bookingReference: z.string()
-    .min(10, 'Invalid booking reference')
+    .min(9, 'Invalid booking reference')
     .max(20, 'Invalid booking reference')
-    .regex(/^BOOK-[A-Z0-9]+$/, 'Invalid booking reference format'),
+    .regex(/^BR-[A-Z0-9]+$/, 'Invalid booking reference format'),
 
   amount: z.number()
     .int('Amount must be an integer (in pence)')
@@ -33,7 +33,7 @@ export const paymentConfirmationSchema = z.object({
     .positive('Amount must be positive'),
 
   bookingReference: z.string()
-    .regex(/^BOOK-[A-Z0-9]+$/, 'Invalid booking reference format')
+    .regex(/^BR-[A-Z0-9]+$/, 'Invalid booking reference format')
     .optional(),
 });
 

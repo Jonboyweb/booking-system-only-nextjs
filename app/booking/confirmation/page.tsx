@@ -31,7 +31,7 @@ function ConfirmationContent() {
         throw new Error('Failed to fetch booking details');
       }
       const data = await response.json();
-      setBooking(data);
+      setBooking(data.data || data); // Extract the booking from data.data if it exists
     } catch (err) {
       console.error('Failed to fetch booking:', err);
       setError('Unable to load booking details');

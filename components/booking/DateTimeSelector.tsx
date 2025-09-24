@@ -28,7 +28,7 @@ export default function DateTimeSelector({
   const maxDate = new Date(today.getTime() + 31 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
-  const [operatingHours, setOperatingHours] = useState<{ startTime: string; endTime: string; isSpecialEvent: boolean; eventName?: string } | null>(null);
+  const [operatingHours, setOperatingHours] = useState<{ startTime: string; endTime: string; lastBookingTime: string; isSpecialEvent: boolean; eventName?: string } | null>(null);
   
   // Update time slots when date changes
   useEffect(() => {
@@ -66,11 +66,11 @@ export default function DateTimeSelector({
           />
           {operatingHours?.isSpecialEvent ? (
             <p className="text-xs text-gold mt-1">
-              🎉 {operatingHours.eventName}: {operatingHours.startTime} - {operatingHours.endTime}
+              🎉 {operatingHours.eventName} - Venue: {operatingHours.startTime} - {operatingHours.endTime} | Bookings until: {operatingHours.lastBookingTime}
             </p>
           ) : operatingHours ? (
             <p className="text-xs text-cream-dark mt-1">
-              Operating hours: {operatingHours.startTime} - {operatingHours.endTime}
+              Venue open: {operatingHours.startTime} - {operatingHours.endTime} | Last arrival: {operatingHours.lastBookingTime}
             </p>
           ) : (
             <p className="text-xs text-cream-dark mt-1">Book up to 31 days in advance</p>
@@ -80,6 +80,16 @@ export default function DateTimeSelector({
         {/* Time Selection */}
         <div>
           <label className="block text-cream mb-2 font-poiret">Arrival Time</label>
+          {/* Important Notice about full-evening reservation */}
+          <div className="bg-gold bg-opacity-10 border border-gold-dark rounded p-3 mb-3">
+            <p className="text-sm text-gold flex items-start">
+              <span className="mr-2">📌</span>
+              <span>
+                <strong>Important:</strong> Booking a table reserves it for the ENTIRE evening.
+                The arrival time indicates when you plan to arrive, but the table is yours all night.
+              </span>
+            </p>
+          </div>
           {date ? (
             timeSlots.length > 0 ? (
               <div className="grid grid-cols-4 gap-2">
@@ -102,11 +112,6 @@ export default function DateTimeSelector({
             )
           ) : (
             <p className="text-cream-dark">Please select a date first</p>
-          )}
-          {time && (
-            <p className="text-xs text-gold mt-2">
-              ⚠️ Booking any time reserves the table for the entire night
-            </p>
           )}
         </div>
         

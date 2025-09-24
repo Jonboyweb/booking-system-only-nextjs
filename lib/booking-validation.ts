@@ -53,12 +53,11 @@ export function canCombineTables(table1: Table, table2: Table): boolean {
 
 /**
  * Gets all conflicting bookings for a given date
- * Since tables are booked for the entire night, ANY booking on that date conflicts
+ * Tables are reserved for the ENTIRE evening when booked
  */
 export function getConflictingBookings(
   bookings: Booking[],
   date: Date,
-  time: string,
   tableId: string,
   excludeBookingId?: string
 ): Booking[] {
@@ -67,12 +66,12 @@ export function getConflictingBookings(
     if (excludeBookingId && booking.id === excludeBookingId) {
       return false;
     }
-    
+
     // Check if same table
     if (booking.tableId !== tableId) {
       return false;
     }
-    
+
     // Check if same date
     const bookingDate = new Date(booking.bookingDate);
     const targetDate = new Date(date);
@@ -83,10 +82,23 @@ export function getConflictingBookings(
     ) {
       return false;
     }
-    
+
     // ANY booking on the same date conflicts (table is booked for entire night)
     return ['PENDING', 'CONFIRMED'].includes(booking.status);
   });
+}
+
+/**
+ * Simplified table availability check for date-based bookings
+ */
+export function checkTableAvailability(
+  tableId: string,
+  date: Date,
+  bookings: Booking[],
+  excludeBookingId?: string
+): boolean {
+  const conflicts = getConflictingBookings(bookings, date, tableId, excludeBookingId);
+  return conflicts.length === 0;
 }
 
 /**
@@ -106,12 +118,12 @@ export function validateBooking(
   combinedTable?: Table
 ): BookingValidationResult {
   const errors: string[] = [];
-  
+
   // Check date is within booking window
   if (!isDateWithinBookingWindow(date)) {
     errors.push('Bookings can only be made up to 31 days in advance');
   }
-  
+
   // Check if time is within operating hours
   if (!isTimeWithinOperatingHours(date, time)) {
     const operatingHours = getOperatingHours(date);
@@ -121,7 +133,7 @@ export function validateBooking(
       errors.push(`Tables are only available from ${operatingHours.startTime} to ${operatingHours.endTime}`);
     }
   }
-  
+
   // Check party size fits table
   if (!isValidTableCapacity(table, partySize, combinedTable)) {
     if (combinedTable) {
@@ -130,21 +142,21 @@ export function validateBooking(
       errors.push(`Party size must be between ${table.capacityMin} and ${table.capacityMax} for this table`);
     }
   }
-  
-  // Check for conflicts - table is booked for entire night
-  const conflicts = getConflictingBookings(existingBookings, date, time, table.id);
+
+  // Check for conflicts - table is booked for entire evening
+  const conflicts = getConflictingBookings(existingBookings, date, table.id);
   if (conflicts.length > 0) {
-    errors.push('This table is already booked for the entire night');
+    errors.push('This table is already booked for the entire evening on this date');
   }
-  
+
   // Check combined table conflicts if applicable
   if (combinedTable) {
-    const combinedConflicts = getConflictingBookings(existingBookings, date, time, combinedTable.id);
+    const combinedConflicts = getConflictingBookings(existingBookings, date, combinedTable.id);
     if (combinedConflicts.length > 0) {
-      errors.push('The combined table is already booked for the entire night');
+      errors.push('The combined table is already booked for the entire evening on this date');
     }
   }
-  
+
   return {
     valid: errors.length === 0,
     errors

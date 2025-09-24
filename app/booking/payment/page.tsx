@@ -30,11 +30,18 @@ function PaymentContent() {
       if (!bookingResponse.ok) {
         throw new Error('Failed to fetch booking details');
       }
-      const booking = await bookingResponse.json();
+      const response = await bookingResponse.json();
+
+      // Extract booking data from the response structure
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Failed to fetch booking details');
+      }
+
+      const booking = response.data;
       setBookingDetails(booking);
 
       // Create payment intent
-      const response = await fetch('/api/payment/create-intent', {
+      const paymentResponse = await fetch('/api/payment/create-intent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -46,12 +53,12 @@ function PaymentContent() {
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!paymentResponse.ok) {
+        const errorData = await paymentResponse.json();
         throw new Error(errorData.error || 'Failed to create payment intent');
       }
 
-      const data = await response.json();
+      const data = await paymentResponse.json();
       
       if (data.alreadyPaid) {
         // Redirect to confirmation page if already paid

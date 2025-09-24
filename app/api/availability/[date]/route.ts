@@ -9,7 +9,7 @@ export async function GET(
   try {
     const { date: dateParam } = await params;
     const date = new Date(dateParam);
-    
+
     // Validate date is within booking window
     if (!isDateWithinBookingWindow(date)) {
       return NextResponse.json(
@@ -17,7 +17,7 @@ export async function GET(
         { status: 400 }
       );
     }
-    
+
     // Get all tables
     const tables = await db.table.findMany({
       orderBy: [
@@ -25,8 +25,9 @@ export async function GET(
         { tableNumber: 'asc' }
       ]
     });
-    
-    // Get all bookings for the date
+
+    // Get all bookings for the date (regardless of time)
+    // When a table is booked for ANY time, it's reserved for the ENTIRE evening
     const bookings = await db.booking.findMany({
       where: {
         bookingDate: date,
@@ -38,62 +39,54 @@ export async function GET(
         table: true
       }
     });
-    
-    // Create availability map by time slot
+
+    // Get list of booked table IDs (these tables are unavailable for the entire evening)
+    const bookedTableIds = bookings.map(b => b.tableId);
+    const bookedTableNumbers = bookings.map(b => b.table.tableNumber);
+
+    // Available tables are those not booked at all for this date
+    const availableTables = tables.filter(
+      table => !bookedTableIds.includes(table.id)
+    );
+
+    // Check combinable tables (15 & 16)
+    const table15Available = availableTables.some(t => t.tableNumber === 15);
+    const table16Available = availableTables.some(t => t.tableNumber === 16);
+    const canCombine = table15Available && table16Available;
+
+    // Create time slots for display purposes
     const timeSlots = [
       '18:00', '18:30', '19:00', '19:30', '20:00', '20:30',
       '21:00', '21:30', '22:00', '22:30', '23:00', '23:30'
     ];
-    
-    const availability = timeSlots.map(time => {
-      const bookedTableIds = bookings
-        .filter(b => {
-          const bookingHour = parseInt(b.bookingTime.split(':')[0]);
-          const slotHour = parseInt(time.split(':')[0]);
-          // Consider 2-hour booking duration
-          return Math.abs(bookingHour - slotHour) < 2;
-        })
-        .map(b => b.tableId);
-      
-      const availableTables = tables.filter(
-        table => !bookedTableIds.includes(table.id)
-      );
-      
-      // Check combinable tables (15 & 16)
-      const table15Available = availableTables.some(t => t.tableNumber === 15);
-      const table16Available = availableTables.some(t => t.tableNumber === 16);
-      const canCombine = table15Available && table16Available;
-      
-      return {
-        time,
-        availableCount: availableTables.length,
-        availableTables: availableTables.map(t => ({
-          id: t.id,
-          tableNumber: t.tableNumber,
-          floor: t.floor,
-          capacityMin: t.capacityMin,
-          capacityMax: t.capacityMax,
-          isVip: t.isVip,
-          canCombineWith: t.canCombineWith
-        })),
-        bookedTableNumbers: bookedTableIds.map(id => 
-          tables.find(t => t.id === id)?.tableNumber
-        ).filter(Boolean),
-        canCombineTables: canCombine
-      };
-    });
-    
+
+    // Since tables are booked for entire evening, availability is the same for all time slots
+    const availability = timeSlots.map(time => ({
+      time,
+      availableCount: availableTables.length,
+      availableTables: availableTables.map(t => ({
+        id: t.id,
+        tableNumber: t.tableNumber,
+        floor: t.floor,
+        capacityMin: t.capacityMin,
+        capacityMax: t.capacityMax,
+        isVip: t.isVip,
+        canCombineWith: t.canCombineWith
+      })),
+      bookedTableNumbers: bookedTableNumbers,
+      canCombineTables: canCombine
+    }));
+
     return NextResponse.json({
       date: dateParam,
       totalTables: tables.length,
+      totalBooked: bookedTableIds.length,
+      totalAvailable: availableTables.length,
       timeSlots: availability,
       summary: {
-        mostAvailable: availability.reduce((prev, curr) => 
-          curr.availableCount > prev.availableCount ? curr : prev
-        ),
-        leastAvailable: availability.reduce((prev, curr) => 
-          curr.availableCount < prev.availableCount ? curr : prev
-        )
+        availableTables: availableTables.length,
+        bookedTables: bookedTableIds.length,
+        message: `Tables are reserved for the entire evening when booked. ${availableTables.length} tables available for ${dateParam}.`
       }
     });
   } catch (error) {

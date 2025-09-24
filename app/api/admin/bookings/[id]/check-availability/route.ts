@@ -83,11 +83,11 @@ export async function POST(
         isVip: t.isVip,
         features: t.features
       })),
-      message: !isAvailable 
-        ? 'This table is already booked for the selected date and time' 
-        : !capacityValid 
+      message: !isAvailable
+        ? 'This table is already booked for the entire evening on this date'
+        : !capacityValid
           ? `This table can only accommodate ${alternativeTables[0]?.capacityMin || 2}-${alternativeTables[0]?.capacityMax || 6} guests`
-          : 'Table is available'
+          : 'Table is available for the entire evening'
     });
   } catch (error) {
     console.error('Error checking availability:', error);

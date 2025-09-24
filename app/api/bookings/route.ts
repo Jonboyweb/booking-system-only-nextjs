@@ -100,11 +100,10 @@ export async function POST(request: NextRequest) {
       return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
     }
 
-    // Check for existing bookings at the same time slot
+    // Check for existing bookings on the same date (table is booked for entire evening)
     const existingBookings = await db.booking.findMany({
       where: {
         bookingDate: bookingDate,
-        bookingTime: validatedData.timeSlot,
         tableId: validatedData.tableId,
         status: {
           in: ['PENDING', 'CONFIRMED']
@@ -114,7 +113,7 @@ export async function POST(request: NextRequest) {
 
     if (existingBookings.length > 0) {
       const response = NextResponse.json(
-        { success: false, error: 'This table is already booked for the selected time slot' },
+        { success: false, error: 'This table is already booked for the entire evening on this date. Please select a different table or date.' },
         { status: 400 }
       );
       return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
@@ -299,7 +298,7 @@ export async function GET(request: NextRequest) {
       }
 
       const booking = await db.booking.findUnique({
-        where: { id: String(validationResult.data) },
+        where: { id: validationResult.data },
         include: {
           table: true,
           customer: true,

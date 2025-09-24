@@ -1,10 +1,11 @@
 import { db } from '@/lib/db';
 
 /**
- * Check if a specific table is available for a given date and time
+ * Check if a specific table is available for a given date
+ * Tables are booked for the ENTIRE evening when reserved
  * @param tableId - The ID of the table to check
  * @param date - The date to check (ISO string)
- * @param time - The time slot to check (e.g., "10:00 PM")
+ * @param time - The time slot (kept for compatibility but not used in availability check)
  * @param excludeBookingId - Optional booking ID to exclude (for modifications)
  * @returns Promise<boolean> - True if available, false otherwise
  */
@@ -16,13 +17,13 @@ export async function checkTableAvailability(
 ): Promise<boolean> {
   try {
     const bookingDate = new Date(date);
-    
-    // Check for existing bookings at this date/time for the table
+
+    // Check for ANY existing bookings on this date for the table
+    // Since tables are booked for entire evening, we ignore the time
     const existingBookings = await db.booking.findMany({
       where: {
         tableId,
         bookingDate,
-        bookingTime: time,
         status: {
           in: ['PENDING', 'CONFIRMED']
         },
@@ -64,9 +65,10 @@ export async function validatePartySize(
 }
 
 /**
- * Get all available tables for a specific date, time, and party size
+ * Get all available tables for a specific date and party size
+ * Tables are booked for the ENTIRE evening when reserved
  * @param date - The date to check (ISO string)
- * @param time - The time slot to check
+ * @param time - The time slot (kept for compatibility but not used in availability check)
  * @param partySize - The size of the party
  * @param excludeBookingId - Optional booking ID to exclude
  * @returns Promise<Array> - Array of available tables
@@ -79,7 +81,7 @@ export async function getAvailableTablesForDateTime(
 ): Promise<Array<{id: string; tableNumber: number; floor: string; capacityMin: number; capacityMax: number; isVip: boolean; description: string; features: string[];}>> {
   try {
     const bookingDate = new Date(date);
-    
+
     // Get all tables that can accommodate the party size
     const suitableTables = await db.table.findMany({
       where: {
@@ -92,11 +94,10 @@ export async function getAvailableTablesForDateTime(
       }
     });
 
-    // Get all bookings for this date/time
+    // Get ALL bookings for this date (regardless of time)
     const bookedTables = await db.booking.findMany({
       where: {
         bookingDate,
-        bookingTime: time,
         status: {
           in: ['PENDING', 'CONFIRMED']
         },
@@ -152,9 +153,10 @@ export async function getAvailableTablesForDateTime(
 
 /**
  * Check if tables 15 & 16 can be combined for a party
+ * Tables are booked for the ENTIRE evening when reserved
  * @param partySize - The size of the party
  * @param date - The date to check
- * @param time - The time slot to check
+ * @param time - The time slot (kept for compatibility but not used)
  * @param excludeBookingId - Optional booking ID to exclude
  * @returns Promise<boolean> - True if tables can be combined
  */
@@ -182,14 +184,13 @@ export async function canCombineTables(
       return false;
     }
 
-    // Check if either table is already booked
+    // Check if either table is already booked for the entire evening
     const existingBookings = await db.booking.findMany({
       where: {
         tableId: {
           in: [table15.id, table16.id]
         },
         bookingDate,
-        bookingTime: time,
         status: {
           in: ['PENDING', 'CONFIRMED']
         },
@@ -206,9 +207,10 @@ export async function canCombineTables(
 
 /**
  * Get booking conflicts for a proposed change
+ * Tables are booked for the ENTIRE evening when reserved
  * @param tableId - The table ID to check
  * @param date - The date to check
- * @param time - The time slot to check
+ * @param time - The time slot (kept for compatibility but not used)
  * @param excludeBookingId - Booking ID to exclude
  * @returns Promise<Array> - Array of conflicting bookings
  */
@@ -220,12 +222,12 @@ export async function getBookingConflicts(
 ): Promise<Array<{bookingReference: string; customerName: string; partySize: number;}>> {
   try {
     const bookingDate = new Date(date);
-    
+
+    // Check for ANY bookings on this date (entire evening reservation)
     const conflicts = await db.booking.findMany({
       where: {
         tableId,
         bookingDate,
-        bookingTime: time,
         status: {
           in: ['PENDING', 'CONFIRMED']
         },
