@@ -43,7 +43,16 @@ export default function DrinkPackageSelector({
   return (
     <div className="bg-charcoal-light p-8 rounded-lg border-2 border-gold">
       <h2 className="text-3xl font-bebas text-gold mb-6">Select Drinks Package</h2>
-      
+
+      {/* Validation message */}
+      {!hasSelection && (
+        <div className="mb-4 p-3 bg-burgundy bg-opacity-20 border border-burgundy rounded">
+          <p className="text-cream text-sm font-poiret">
+            Please select a drinks package or custom bottles to continue with your booking.
+          </p>
+        </div>
+      )}
+
       {/* Toggle between packages and custom */}
       <div className="flex gap-4 mb-6">
         <button
@@ -156,9 +165,10 @@ export default function DrinkPackageSelector({
         </button>
         <button
           onClick={onNext}
-          className="flex-1 py-3 bg-gold text-charcoal font-bebas text-lg rounded hover:bg-gold-light transition-all"
+          disabled={!hasSelection}
+          className="flex-1 py-3 bg-gold text-charcoal font-bebas text-lg rounded hover:bg-gold-light disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
-          {hasSelection ? 'Continue' : 'Skip Drinks'}
+          Continue {!hasSelection && '(Select a package or bottles)'}
         </button>
       </div>
     </div>

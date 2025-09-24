@@ -11,6 +11,7 @@ import {
   bookingReferenceSchema,
   idParamSchema
 } from '@/lib/validations/booking';
+import { isValidBookingTimeSlot } from '@/lib/operating-hours';
 import { z } from 'zod';
 import { checkRateLimit, applyRateLimitHeaders, RateLimitConfigs } from '@/lib/rate-limit';
 import { withCORS } from '@/lib/cors';
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     // Get table information
     const table = await db.table.findUnique({
-      where: { id: String(validatedData.tableId) }
+      where: { id: validatedData.tableId }
     });
 
     if (!table) {
@@ -87,12 +88,24 @@ export async function POST(request: NextRequest) {
       return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
     }
 
+    // Validate time slot is within operating hours for the selected date
+    if (!isValidBookingTimeSlot(bookingDate, validatedData.timeSlot)) {
+      const response = NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid time slot. Please select a time within operating hours.'
+        },
+        { status: 400 }
+      );
+      return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
+    }
+
     // Check for existing bookings at the same time slot
     const existingBookings = await db.booking.findMany({
       where: {
         bookingDate: bookingDate,
         bookingTime: validatedData.timeSlot,
-        tableId: String(validatedData.tableId),
+        tableId: validatedData.tableId,
         status: {
           in: ['PENDING', 'CONFIRMED']
         }
@@ -144,7 +157,7 @@ export async function POST(request: NextRequest) {
     const booking = await db.booking.create({
       data: {
         bookingReference,
-        tableId: String(validatedData.tableId),
+        tableId: validatedData.tableId,
         customerId: customer.id,
         bookingDate,
         bookingTime: validatedData.timeSlot,
@@ -152,7 +165,7 @@ export async function POST(request: NextRequest) {
         status: 'PENDING',
         depositAmount: 50,
         depositPaid: false,
-        drinkPackageId: validatedData.packageId ? String(validatedData.packageId) : null,
+        drinkPackageId: validatedData.packageId || null,
         specialRequests: validatedData.specialRequests ? sanitizeString(validatedData.specialRequests) : null,
         stripePaymentId: validatedData.stripePaymentIntentId || null
       },
@@ -174,7 +187,7 @@ export async function POST(request: NextRequest) {
       // Process spirits with validated quantities
       for (const orderItem of validatedData.customOrder) {
         const spirit = await db.spirit.findUnique({
-          where: { id: String(orderItem.spiritId) }
+          where: { id: orderItem.spiritId }
         });
 
         if (!spirit) {
@@ -209,7 +222,7 @@ export async function POST(request: NextRequest) {
       if (validatedData.champagneOrder && validatedData.champagneOrder.length > 0) {
         for (const champagneItem of validatedData.champagneOrder) {
           const champagne = await db.champagne.findUnique({
-            where: { id: String(champagneItem.champagneId) }
+            where: { id: champagneItem.champagneId }
           });
 
           if (!champagne) {

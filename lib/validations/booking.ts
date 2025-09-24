@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isValidBookingTimeSlot } from '@/lib/operating-hours';
 
 // Email validation regex
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -23,9 +24,8 @@ const customerSchema = z.object({
 
 // Custom order item schema
 const customOrderItemSchema = z.object({
-  spiritId: z.number()
-    .int('Spirit ID must be an integer')
-    .positive('Spirit ID must be positive'),
+  spiritId: z.string()
+    .uuid('Spirit ID must be a valid UUID'),
   quantity: z.number()
     .int('Quantity must be an integer')
     .min(1, 'Quantity must be at least 1')
@@ -34,9 +34,8 @@ const customOrderItemSchema = z.object({
 
 // Champagne order item schema
 const champagneOrderItemSchema = z.object({
-  champagneId: z.number()
-    .int('Champagne ID must be an integer')
-    .positive('Champagne ID must be positive'),
+  champagneId: z.string()
+    .uuid('Champagne ID must be a valid UUID'),
   quantity: z.number()
     .int('Quantity must be an integer')
     .min(1, 'Quantity must be at least 1')
@@ -46,10 +45,8 @@ const champagneOrderItemSchema = z.object({
 // Booking creation schema
 export const createBookingSchema = z.object({
   customer: customerSchema,
-  tableId: z.number()
-    .int('Table ID must be an integer')
-    .min(1, 'Invalid table ID')
-    .max(16, 'Invalid table ID'), // Based on 16 tables in the system
+  tableId: z.string()
+    .uuid('Table ID must be a valid UUID'),
   date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
     .refine((date) => {
@@ -60,16 +57,14 @@ export const createBookingSchema = z.object({
       maxDate.setDate(maxDate.getDate() + 31);
       return bookingDate >= today && bookingDate <= maxDate;
     }, 'Booking must be between today and 31 days from now'),
-  timeSlot: z.enum(['18:00-20:00', '20:00-22:00', '22:00-00:00'], {
-    message: 'Invalid time slot',
-  }),
+  timeSlot: z.string()
+    .regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Time must be in HH:MM format'),
   partySize: z.number()
     .int('Party size must be an integer')
     .min(1, 'Party size must be at least 1')
     .max(12, 'Party size must be 12 or less'),
-  packageId: z.number()
-    .int('Package ID must be an integer')
-    .positive('Package ID must be positive')
+  packageId: z.string()
+    .uuid('Package ID must be a valid UUID')
     .optional()
     .nullable(),
   customOrder: z.array(customOrderItemSchema)
@@ -101,17 +96,15 @@ export const updateBookingSchema = z.object({
     message: 'Invalid booking status',
   }).optional(),
   customer: customerSchema.partial().optional(),
-  tableId: z.number()
-    .int('Table ID must be an integer')
-    .min(1, 'Invalid table ID')
-    .max(16, 'Invalid table ID')
+  tableId: z.string()
+    .uuid('Table ID must be a valid UUID')
     .optional(),
   date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
     .optional(),
-  timeSlot: z.enum(['18:00-20:00', '20:00-22:00', '22:00-00:00'], {
-    message: 'Invalid time slot',
-  }).optional(),
+  timeSlot: z.string()
+    .regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Time must be in HH:MM format')
+    .optional(),
   partySize: z.number()
     .int('Party size must be an integer')
     .min(1, 'Party size must be at least 1')

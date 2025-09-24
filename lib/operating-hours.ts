@@ -105,11 +105,11 @@ export function isTimeWithinOperatingHours(date: Date, time: string): boolean {
   const [inputHour, inputMinute] = time.split(':').map(Number);
   const [startHour, startMinute] = hours.startTime.split(':').map(Number);
   const [endHour, endMinute] = hours.endTime.split(':').map(Number);
-  
+
   const inputMinutes = inputHour * 60 + inputMinute;
   const startMinutes = startHour * 60 + startMinute;
   let endMinutes = endHour * 60 + endMinute;
-  
+
   // Handle next day scenario
   if (endMinutes < startMinutes) {
     endMinutes += 24 * 60;
@@ -117,6 +117,15 @@ export function isTimeWithinOperatingHours(date: Date, time: string): boolean {
       return inputMinutes + 24 * 60 <= endMinutes;
     }
   }
-  
+
   return inputMinutes >= startMinutes && inputMinutes <= endMinutes;
+}
+
+// Helper function to validate if a time is a valid booking slot
+export function isValidBookingTimeSlot(date: Date, time: string): boolean {
+  // Generate all valid time slots for the date
+  const validSlots = generateTimeSlots(date);
+
+  // Check if the provided time is in the valid slots
+  return validSlots.includes(time);
 }

@@ -124,6 +124,35 @@ export default function BookingFlow() {
   
   const handlePayment = async () => {
     try {
+      // Validate that drinks have been selected
+      if (!formData.drinkPackageId && selectedSpirits.length === 0) {
+        alert('Please select a drinks package or custom bottles before proceeding.');
+        goToStep('drinks');
+        return;
+      }
+
+      // Transform customer data to match backend schema
+      const customerData = {
+        name: `${formData.customer.firstName.trim()} ${formData.customer.lastName.trim()}`.trim(),
+        email: formData.customer.email,
+        phone: formData.customer.phone
+      };
+
+      // Transform selected spirits and champagnes to match backend schema
+      const customOrder = selectedSpirits.length > 0
+        ? selectedSpirits.map(spiritId => ({
+            spiritId: spiritId,
+            quantity: 1
+          }))
+        : null; // Use null instead of undefined for JSON serialization
+
+      const champagneOrder = selectedChampagnes.length > 0
+        ? selectedChampagnes.map(champagneId => ({
+            champagneId: champagneId,
+            quantity: 1
+          }))
+        : null; // Use null instead of undefined for JSON serialization
+
       // Create the booking
       const bookingResponse = await fetch('/api/bookings', {
         method: 'POST',
@@ -133,26 +162,33 @@ export default function BookingFlow() {
         body: JSON.stringify({
           tableId: formData.tableId,
           date: formData.date,
-          time: formData.time,
+          timeSlot: formData.time, // Backend expects 'timeSlot', not 'time'
           partySize: formData.partySize,
-          customer: formData.customer,
-          drinkPackageId: formData.drinkPackageId,
-          selectedSpirits: selectedSpirits,
-          selectedChampagnes: selectedChampagnes,
-          specialRequests: formData.specialRequests
+          customer: customerData, // Use transformed customer data
+          packageId: formData.drinkPackageId || null, // Ensure null instead of undefined
+          customOrder: customOrder, // Use transformed format (null when no spirits)
+          champagneOrder: champagneOrder, // Use transformed format (null when no champagnes)
+          specialRequests: formData.specialRequests || ''
         })
       });
 
       if (!bookingResponse.ok) {
         const error = await bookingResponse.json();
-        alert(error.error || 'Failed to create booking');
+        console.error('Booking failed:', error);
+
+        // Handle specific validation errors
+        if (error.details) {
+          alert(`Booking failed: ${error.details}`);
+        } else {
+          alert(error.error || 'Failed to create booking. Please check all fields and try again.');
+        }
         return;
       }
 
-      const booking = await bookingResponse.json();
-      
-      // Redirect to payment page
-      window.location.href = `/booking/payment?bookingId=${booking.id}`;
+      const bookingResult = await bookingResponse.json();
+
+      // Redirect to payment page - access booking data from the response
+      window.location.href = `/booking/payment?bookingId=${bookingResult.data.id}`;
     } catch (error) {
       console.error('Booking failed:', error);
       alert('Failed to create booking. Please try again.');

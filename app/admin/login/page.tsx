@@ -42,15 +42,15 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-prohibition-dark flex items-center justify-center p-4">
+    <div className="min-h-screen bg-speakeasy-charcoal flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <div className="bg-prohibition-cream rounded-lg shadow-2xl p-8 border-2 border-prohibition-gold">
+        <div className="bg-speakeasy-cream rounded-lg shadow-2xl p-8 border-2 border-gold">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bebas text-prohibition-dark tracking-wider">
+            <h1 className="text-3xl font-bebas text-speakeasy-charcoal tracking-wider">
               THE BACKROOM LEEDS
             </h1>
-            <p className="text-prohibition-brown mt-2 font-crimson">
+            <p className="text-burgundy mt-2 font-crimson">
               Staff Portal
             </p>
           </div>
@@ -60,7 +60,7 @@ export default function AdminLoginPage() {
             <div>
               <label 
                 htmlFor="email" 
-                className="block text-sm font-medium text-prohibition-brown mb-2"
+                className="block text-sm font-medium text-burgundy mb-2"
               >
                 Email Address
               </label>
@@ -69,7 +69,7 @@ export default function AdminLoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-prohibition-gold/30 rounded-md bg-white focus:ring-2 focus:ring-prohibition-gold focus:border-transparent"
+                className="w-full px-4 py-2 border border-gold/30 rounded-md bg-white focus:ring-2 focus:ring-gold focus:border-transparent"
                 placeholder="admin@backroomleeds.co.uk"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -83,7 +83,7 @@ export default function AdminLoginPage() {
             <div>
               <label 
                 htmlFor="password" 
-                className="block text-sm font-medium text-prohibition-brown mb-2"
+                className="block text-sm font-medium text-burgundy mb-2"
               >
                 Password
               </label>
@@ -92,7 +92,7 @@ export default function AdminLoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-prohibition-gold/30 rounded-md bg-white focus:ring-2 focus:ring-prohibition-gold focus:border-transparent"
+                className="w-full px-4 py-2 border border-gold/30 rounded-md bg-white focus:ring-2 focus:ring-gold focus:border-transparent"
                 placeholder="Enter your password"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -113,7 +113,7 @@ export default function AdminLoginPage() {
               type="button"
               onClick={handleLogin}
               disabled={loading || !email || !password}
-              className="w-full bg-prohibition-gold text-prohibition-dark py-3 px-4 rounded-md font-medium hover:bg-prohibition-gold/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gold text-speakeasy-charcoal py-3 px-4 rounded-md font-medium hover:bg-gold-light transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
@@ -132,11 +132,11 @@ export default function AdminLoginPage() {
           </div>
 
           {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-prohibition-gold/20 text-center">
-            <p className="text-xs text-prohibition-brown/60">
+          <div className="mt-8 pt-6 border-t border-gold/20 text-center">
+            <p className="text-xs text-burgundy/60">
               Authorized personnel only
             </p>
-            <p className="text-xs text-prohibition-brown/60 mt-2">
+            <p className="text-xs text-burgundy/60 mt-2">
               Default: admin@backroomleeds.co.uk / admin123
             </p>
           </div>
