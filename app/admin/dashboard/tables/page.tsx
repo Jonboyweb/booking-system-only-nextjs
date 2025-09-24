@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Calendar, Lock, Shield } from 'lucide-react';
+import TableBlockModal from '@/components/admin/TableBlockModal';
+import TableBlocksList from '@/components/admin/TableBlocksList';
 
 interface Table {
   id: string;
@@ -19,6 +22,10 @@ export default function TablesPage() {
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFloor, setSelectedFloor] = useState('all');
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const [refreshBlocks, setRefreshBlocks] = useState(0);
+  const [activeTab, setActiveTab] = useState<'tables' | 'blocks'>('tables');
 
   useEffect(() => {
     fetchTables();
@@ -26,7 +33,7 @@ export default function TablesPage() {
 
   const fetchTables = async () => {
     try {
-      const response = await fetch('/api/tables');
+      const response = await fetch('/api/tables/all');
       const data = await response.json();
       setTables(data);
     } catch (error) {
@@ -52,6 +59,15 @@ export default function TablesPage() {
     }
   };
 
+  const openBlockModal = (table: Table) => {
+    setSelectedTable(table);
+    setShowBlockModal(true);
+  };
+
+  const handleBlockSuccess = () => {
+    setRefreshBlocks(prev => prev + 1);
+  };
+
   const filteredTables = tables.filter(table => {
     if (selectedFloor === 'all') return true;
     return table.floor === selectedFloor;
@@ -64,13 +80,41 @@ export default function TablesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Table Management</h1>
-        <p className="text-gray-700 mt-1">Manage venue tables and availability</p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Table Management</h1>
+          <p className="text-gray-700 mt-1">Manage venue tables and availability</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveTab('tables')}
+            className={`px-4 py-2 rounded-md flex items-center gap-2 ${
+              activeTab === 'tables'
+                ? 'bg-gold text-speakeasy-charcoal'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            <Shield className="w-4 h-4" />
+            Tables
+          </button>
+          <button
+            onClick={() => setActiveTab('blocks')}
+            className={`px-4 py-2 rounded-md flex items-center gap-2 ${
+              activeTab === 'blocks'
+                ? 'bg-gold text-speakeasy-charcoal'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            <Calendar className="w-4 h-4" />
+            Date Blocks
+          </button>
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
+      {activeTab === 'tables' ? (
+        <>
+          {/* Filters */}
+          <div className="bg-white rounded-lg shadow p-4">
         <div className="flex space-x-4">
           <button
             onClick={() => setSelectedFloor('all')}
@@ -162,22 +206,31 @@ export default function TablesPage() {
                 <div className="pt-3 border-t">
                   <div className="flex justify-between items-center">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      table.isActive 
-                        ? 'bg-green-100 text-green-800' 
+                      table.isActive
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
                     }`}>
                       {table.isActive ? 'Active' : 'Inactive'}
                     </span>
-                    <button
-                      onClick={() => toggleTableStatus(table.id, table.isActive)}
-                      className={`px-3 py-1 rounded text-sm ${
-                        table.isActive
-                          ? 'bg-red-500 text-white hover:bg-red-600'
-                          : 'bg-green-500 text-white hover:bg-green-600'
-                      }`}
-                    >
-                      {table.isActive ? 'Deactivate' : 'Activate'}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => openBlockModal(table)}
+                        className="px-3 py-1 bg-amber-500 text-white rounded text-sm hover:bg-amber-600 flex items-center gap-1"
+                      >
+                        <Lock className="w-3 h-3" />
+                        Block Dates
+                      </button>
+                      <button
+                        onClick={() => toggleTableStatus(table.id, table.isActive)}
+                        className={`px-3 py-1 rounded text-sm ${
+                          table.isActive
+                            ? 'bg-red-500 text-white hover:bg-red-600'
+                            : 'bg-green-500 text-white hover:bg-green-600'
+                        }`}
+                      >
+                        {table.isActive ? 'Deactivate' : 'Activate'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -186,34 +239,47 @@ export default function TablesPage() {
         ))}
       </div>
 
-      {/* Summary */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Venue Summary</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <p className="text-sm text-gray-700">Total Tables</p>
-            <p className="text-2xl font-bold">{tables.length}</p>
+          {/* Summary */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">Venue Summary</h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-sm text-gray-700">Total Tables</p>
+                <p className="text-2xl font-bold">{tables.length}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-700">Active Tables</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {tables.filter(t => t.isActive).length}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-700">VIP Tables</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {tables.filter(t => t.isVip).length}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-700">Total Capacity</p>
+                <p className="text-2xl font-bold">
+                  {tables.reduce((sum, t) => sum + t.capacityMax, 0)}
+                </p>
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-gray-700">Active Tables</p>
-            <p className="text-2xl font-bold text-green-600">
-              {tables.filter(t => t.isActive).length}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-700">VIP Tables</p>
-            <p className="text-2xl font-bold text-yellow-600">
-              {tables.filter(t => t.isVip).length}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-700">Total Capacity</p>
-            <p className="text-2xl font-bold">
-              {tables.reduce((sum, t) => sum + t.capacityMax, 0)}
-            </p>
-          </div>
-        </div>
-      </div>
+        </>
+      ) : (
+        <TableBlocksList refreshTrigger={refreshBlocks} />
+      )}
+
+      {/* Block Modal */}
+      {showBlockModal && selectedTable && (
+        <TableBlockModal
+          table={selectedTable}
+          onClose={() => setShowBlockModal(false)}
+          onSuccess={handleBlockSuccess}
+        />
+      )}
     </div>
   );
 }

@@ -18,8 +18,11 @@ export async function GET(
       );
     }
 
-    // Get all tables
+    // Get all active tables only
     const tables = await db.table.findMany({
+      where: {
+        isActive: true // Only consider active tables
+      },
       orderBy: [
         { floor: 'asc' },
         { tableNumber: 'asc' }
@@ -40,13 +43,32 @@ export async function GET(
       }
     });
 
+    // Get all table blocks for the date
+    const tableBlocks = await db.tableBlock.findMany({
+      where: {
+        startDate: {
+          lte: date
+        },
+        endDate: {
+          gte: date
+        }
+      },
+      include: {
+        table: true
+      }
+    });
+
     // Get list of booked table IDs (these tables are unavailable for the entire evening)
     const bookedTableIds = bookings.map(b => b.tableId);
     const bookedTableNumbers = bookings.map(b => b.table.tableNumber);
 
-    // Available tables are those not booked at all for this date
+    // Get list of blocked table IDs
+    const blockedTableIds = tableBlocks.map(tb => tb.tableId);
+    const blockedTableNumbers = tableBlocks.map(tb => tb.table.tableNumber);
+
+    // Available tables are those not booked AND not blocked for this date
     const availableTables = tables.filter(
-      table => !bookedTableIds.includes(table.id)
+      table => !bookedTableIds.includes(table.id) && !blockedTableIds.includes(table.id)
     );
 
     // Check combinable tables (15 & 16)
@@ -74,6 +96,7 @@ export async function GET(
         canCombineWith: t.canCombineWith
       })),
       bookedTableNumbers: bookedTableNumbers,
+      blockedTableNumbers: blockedTableNumbers,
       canCombineTables: canCombine
     }));
 
@@ -81,11 +104,18 @@ export async function GET(
       date: dateParam,
       totalTables: tables.length,
       totalBooked: bookedTableIds.length,
+      totalBlocked: blockedTableIds.length,
       totalAvailable: availableTables.length,
       timeSlots: availability,
+      tableBlocks: tableBlocks.map(tb => ({
+        tableNumber: tb.table.tableNumber,
+        reason: tb.reason,
+        blockedBy: tb.blockedBy
+      })),
       summary: {
         availableTables: availableTables.length,
         bookedTables: bookedTableIds.length,
+        blockedTables: blockedTableIds.length,
         message: `Tables are reserved for the entire evening when booked. ${availableTables.length} tables available for ${dateParam}.`
       }
     });

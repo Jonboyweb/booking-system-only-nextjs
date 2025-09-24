@@ -15,6 +15,7 @@ export default function BookingFlow() {
   const [spirits, setSpirits] = useState<Spirit[]>([]);
   const [champagnes, setChampagnes] = useState<Champagne[]>([]);
   const [bookedTables, setBookedTables] = useState<number[]>([]);
+  const [blockedTables, setBlockedTables] = useState<number[]>([]);
   
   const [formData, setFormData] = useState<BookingFormData>({
     date: '',
@@ -36,16 +37,28 @@ export default function BookingFlow() {
   // Use real-time availability stream
   const { isConnected } = useAvailabilityStream(formData.date);
   
-  // Load initial data
+  // Load tables based on date
   useEffect(() => {
-    const loadData = async () => {
+    const loadTables = async () => {
       try {
-        // Load tables
+        // Always use active tables only for customer booking
         const tablesRes = await fetch('/api/tables');
         if (tablesRes.ok) {
           const data = await tablesRes.json();
           setTables(data);
         }
+      } catch (error) {
+        console.error('Failed to load tables:', error);
+      }
+    };
+
+    loadTables();
+  }, []); // Only load once on mount
+
+  // Load initial data (packages, spirits, champagnes)
+  useEffect(() => {
+    const loadData = async () => {
+      try {
         
         // Load drink packages
         const packagesRes = await fetch('/api/packages');
@@ -84,6 +97,7 @@ export default function BookingFlow() {
           if (res.ok) {
             const data = await res.json();
             setBookedTables(data.bookedTables || []);
+            setBlockedTables(data.blockedTables || []);
           }
         } catch (error) {
           console.error('Failed to check availability:', error);
@@ -270,6 +284,7 @@ export default function BookingFlow() {
               partySize={formData.partySize}
               date={formData.date}
               bookedTables={bookedTables}
+              blockedTables={blockedTables}
             />
             <FloorPlan
               floor="DOWNSTAIRS"
@@ -279,6 +294,7 @@ export default function BookingFlow() {
               partySize={formData.partySize}
               date={formData.date}
               bookedTables={bookedTables}
+              blockedTables={blockedTables}
             />
             <div className="flex gap-4">
               <button

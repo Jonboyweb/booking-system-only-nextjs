@@ -100,6 +100,31 @@ export async function POST(request: NextRequest) {
       return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
     }
 
+    // Check for table blocks on the booking date
+    const tableBlocks = await db.tableBlock.findMany({
+      where: {
+        tableId: validatedData.tableId,
+        startDate: {
+          lte: bookingDate
+        },
+        endDate: {
+          gte: bookingDate
+        }
+      }
+    });
+
+    if (tableBlocks.length > 0) {
+      const block = tableBlocks[0];
+      const response = NextResponse.json(
+        {
+          success: false,
+          error: `This table is not available on ${bookingDate.toISOString().split('T')[0]}. ${block.reason ? `Reason: ${block.reason}` : 'The table has been blocked for this date.'}`
+        },
+        { status: 400 }
+      );
+      return applyRateLimitHeaders(withCORS(response, request), rateLimitResult);
+    }
+
     // Check for existing bookings on the same date (table is booked for entire evening)
     const existingBookings = await db.booking.findMany({
       where: {

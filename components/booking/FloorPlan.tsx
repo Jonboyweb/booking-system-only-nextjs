@@ -11,6 +11,7 @@ interface FloorPlanProps {
   partySize: number;
   date: string;
   bookedTables?: number[];
+  blockedTables?: number[];
 }
 
 export default function FloorPlan({
@@ -19,7 +20,8 @@ export default function FloorPlan({
   selectedTable,
   onTableSelect,
   partySize,
-  bookedTables = []
+  bookedTables = [],
+  blockedTables = []
 }: FloorPlanProps) {
   const [hoveredTable, setHoveredTable] = useState<number | null>(null);
   
@@ -27,6 +29,7 @@ export default function FloorPlan({
   
   const getTableStatus = (table: Table) => {
     if (bookedTables.includes(table.tableNumber)) return 'booked';
+    if (blockedTables.includes(table.tableNumber)) return 'blocked';
     if (partySize < table.capacityMin || partySize > table.capacityMax) return 'unavailable';
     if (selectedTable?.tableNumber === table.tableNumber) return 'selected';
     return 'available';
@@ -35,6 +38,7 @@ export default function FloorPlan({
   const getTableColor = (status: string) => {
     switch (status) {
       case 'booked': return '#722F37'; // Burgundy for booked
+      case 'blocked': return '#4A0E0E'; // Dark red for blocked
       case 'unavailable': return '#666666'; // Gray for unavailable
       case 'selected': return '#D4AF37'; // Gold for selected
       case 'available': return '#2E5F45'; // Green for available
@@ -122,7 +126,7 @@ export default function FloorPlan({
                 stroke={isHovered ? '#D4AF37' : '#666'}
                 strokeWidth={isHovered ? 3 : 1}
                 className={status === 'available' ? 'cursor-pointer transition-all' : 'cursor-not-allowed'}
-                opacity={status === 'booked' || status === 'unavailable' ? 0.5 : 1}
+                opacity={status === 'booked' || status === 'unavailable' || status === 'blocked' ? 0.5 : 1}
                 onMouseEnter={() => setHoveredTable(table.tableNumber)}
                 onMouseLeave={() => setHoveredTable(null)}
                 onClick={() => status === 'available' && onTableSelect(table)}
@@ -192,9 +196,10 @@ export default function FloorPlan({
                     status === 'available' ? 'text-green-400' :
                     status === 'selected' ? 'text-gold' :
                     status === 'booked' ? 'text-burgundy' :
+                    status === 'blocked' ? 'text-red-500' :
                     'text-gray-400'
                   }`}>
-                    {status.toUpperCase()}
+                    {status === 'blocked' ? 'BLOCKED/MAINTENANCE' : status.toUpperCase()}
                   </span>
                 </p>
               </>
@@ -204,7 +209,7 @@ export default function FloorPlan({
       )}
       
       {/* Legend */}
-      <div className="flex gap-6 mt-4 justify-center">
+      <div className="flex gap-6 mt-4 justify-center flex-wrap">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-[#2E5F45]"></div>
           <span className="text-cream text-sm">Available</span>
@@ -216,6 +221,10 @@ export default function FloorPlan({
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-burgundy opacity-50"></div>
           <span className="text-cream text-sm">Booked</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 bg-[#4A0E0E] opacity-50"></div>
+          <span className="text-cream text-sm">Blocked</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-gray-600 opacity-50"></div>
