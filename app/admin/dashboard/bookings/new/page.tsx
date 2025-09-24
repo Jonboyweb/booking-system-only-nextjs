@@ -124,7 +124,7 @@ export default function NewBookingPage() {
                 required
                 value={formData.firstName}
                 onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
               />
             </div>
             <div>
@@ -136,7 +136,7 @@ export default function NewBookingPage() {
                 required
                 value={formData.lastName}
                 onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
               />
             </div>
             <div>
@@ -148,7 +148,7 @@ export default function NewBookingPage() {
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
               />
             </div>
             <div>
@@ -160,7 +160,7 @@ export default function NewBookingPage() {
                 required
                 value={formData.phone}
                 onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
               />
             </div>
           </div>
@@ -192,7 +192,7 @@ export default function NewBookingPage() {
                 onChange={(e) => setFormData({...formData, bookingDate: e.target.value})}
                 min={new Date().toISOString().split('T')[0]}
                 max={new Date(Date.now() + 31 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
               />
             </div>
             <div>
@@ -203,7 +203,7 @@ export default function NewBookingPage() {
                 required
                 value={formData.bookingTime}
                 onChange={(e) => setFormData({...formData, bookingTime: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
               >
                 <option value="">Select time</option>
                 <option value="18:00">18:00</option>
@@ -230,7 +230,7 @@ export default function NewBookingPage() {
                 max="12"
                 value={formData.partySize}
                 onChange={(e) => setFormData({...formData, partySize: parseInt(e.target.value)})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
               />
             </div>
             <div>
@@ -241,7 +241,7 @@ export default function NewBookingPage() {
                 required
                 value={formData.tableId}
                 onChange={(e) => setFormData({...formData, tableId: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
               >
                 <option value="">Select table</option>
                 {tables.map(table => (
@@ -258,7 +258,7 @@ export default function NewBookingPage() {
               <select
                 value={formData.drinkPackageId}
                 onChange={(e) => setFormData({...formData, drinkPackageId: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
               >
                 <option value="">No package</option>
                 {packages.map(pkg => (
@@ -276,7 +276,7 @@ export default function NewBookingPage() {
                 value={formData.specialRequests}
                 onChange={(e) => setFormData({...formData, specialRequests: e.target.value})}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
                 placeholder="Any special requests from the customer..."
               />
             </div>
@@ -288,7 +288,7 @@ export default function NewBookingPage() {
                 value={formData.internalNotes}
                 onChange={(e) => setFormData({...formData, internalNotes: e.target.value})}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
                 placeholder="Internal notes (not visible to customer)..."
               />
             </div>
@@ -321,7 +321,7 @@ export default function NewBookingPage() {
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-2 bg-prohibition-gold text-prohibition-dark rounded-md hover:bg-prohibition-gold/90 transition disabled:opacity-50"
+            className="px-6 py-2 bg-gold text-speakeasy-charcoal rounded-md hover:bg-gold/90 transition disabled:opacity-50"
           >
             {loading ? 'Creating...' : 'Create Booking'}
           </button>

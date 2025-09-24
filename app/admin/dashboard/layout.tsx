@@ -30,15 +30,15 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-prohibition-dark transition-all duration-300 flex flex-col`}>
+      <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-speakeasy-charcoal transition-all duration-300 flex flex-col`}>
         {/* Logo */}
-        <div className="p-4 border-b border-prohibition-gold/20">
-          <h1 className={`font-bebas text-prohibition-gold text-2xl tracking-wider ${!sidebarOpen && 'hidden'}`}>
+        <div className="p-4 border-b border-gold/20">
+          <h1 className={`font-bebas text-gold text-2xl tracking-wider ${!sidebarOpen && 'hidden'}`}>
             BACKROOM ADMIN
           </h1>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-prohibition-gold hover:text-prohibition-gold/80 mt-2"
+            className="text-gold hover:text-gold/80 mt-2"
           >
             {sidebarOpen ? '◀' : '▶'}
           </button>
@@ -53,8 +53,8 @@ export default function AdminLayout({
                   href={item.href}
                   className={`flex items-center space-x-3 px-3 py-2 rounded-md transition ${
                     pathname === item.href
-                      ? 'bg-prohibition-gold/20 text-prohibition-gold'
-                      : 'text-prohibition-cream hover:bg-prohibition-gold/10 hover:text-prohibition-gold'
+                      ? 'bg-gold/20 text-gold'
+                      : 'text-gray-300 hover:bg-gold/10 hover:text-gold'
                   }`}
                 >
                   <span className="text-xl">{item.icon}</span>
@@ -66,10 +66,10 @@ export default function AdminLayout({
         </nav>
 
         {/* User Menu */}
-        <div className="p-4 border-t border-prohibition-gold/20">
+        <div className="p-4 border-t border-gold/20">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center space-x-3 px-3 py-2 text-prohibition-cream hover:text-prohibition-gold transition"
+            className="w-full flex items-center space-x-3 px-3 py-2 text-gray-300 hover:text-gold transition"
           >
             <span>🚪</span>
             {sidebarOpen && <span>Logout</span>}
@@ -78,7 +78,7 @@ export default function AdminLayout({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto text-gray-900">
         {/* Top Bar */}
         <header className="bg-white shadow-sm border-b">
           <div className="px-6 py-4">
@@ -89,7 +89,7 @@ export default function AdminLayout({
         </header>
 
         {/* Page Content */}
-        <div className="p-6">
+        <div className="p-6 text-gray-900">
           {children}
         </div>
       </main>

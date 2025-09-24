@@ -73,7 +73,7 @@ export default function CustomersPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Customer Database</h1>
-        <p className="text-gray-600 mt-1">Manage customer information and booking history</p>
+        <p className="text-gray-700 mt-1">Manage customer information and booking history</p>
       </div>
 
       {/* Search */}
@@ -83,7 +83,7 @@ export default function CustomersPage() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search by name, email, or phone..."
-          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
         />
       </div>
 

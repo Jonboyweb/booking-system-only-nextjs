@@ -40,7 +40,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600 mt-1">Manage admin account and system settings</p>
+        <p className="text-gray-700 mt-1">Manage admin account and system settings</p>
       </div>
 
       {/* Account Settings */}
@@ -50,7 +50,7 @@ export default function SettingsPage() {
         </div>
         <div className="p-6 space-y-4">
           <div>
-            <p className="text-sm text-gray-600">Logged in as</p>
+            <p className="text-sm text-gray-700">Logged in as</p>
             <p className="font-medium">admin@backroomleeds.co.uk</p>
           </div>
           
@@ -80,7 +80,7 @@ export default function SettingsPage() {
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
                 />
               </div>
               <div>
@@ -93,7 +93,7 @@ export default function SettingsPage() {
                   onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
                   required
                   minLength={8}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
                 />
               </div>
               <div>
@@ -106,13 +106,13 @@ export default function SettingsPage() {
                   onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
                   required
                   minLength={8}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
                 />
               </div>
               <div className="flex space-x-4">
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-prohibition-gold text-prohibition-dark rounded-md hover:bg-prohibition-gold/90 transition"
+                  className="px-4 py-2 bg-gold text-speakeasy-charcoal rounded-md hover:bg-gold/90 transition"
                 >
                   Update Password
                 </button>

@@ -19,7 +19,7 @@ function getFromEmail(): string {
 }
 
 // Helper function to check if we should use MailHog
-function useMailHog(): boolean {
+function shouldUseMailHog(): boolean {
   return process.env.EMAIL_PROVIDER === 'mailhog';
 }
 
@@ -71,7 +71,7 @@ export async function sendRefundConfirmationEmail(data: RefundEmailData): Promis
     });
 
     // Use MailHog if configured
-    if (useMailHog()) {
+    if (shouldUseMailHog()) {
       const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST || 'localhost',
         port: parseInt(process.env.SMTP_PORT || '1025'),

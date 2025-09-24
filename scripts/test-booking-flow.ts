@@ -104,7 +104,7 @@ async function testBookingFlow() {
     console.log('Test the flow by visiting the payment URL above in your browser.\n');
 
   } catch (error) {
-    console.error('❌ Test failed:', error.message);
+    console.error('❌ Test failed:', error instanceof Error ? error.message : error);
     process.exit(1);
   }
 }

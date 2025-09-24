@@ -72,12 +72,12 @@ export default function AnalyticsPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Analytics & Reports</h1>
-          <p className="text-gray-600 mt-1">Business insights and performance metrics</p>
+          <p className="text-gray-700 mt-1">Business insights and performance metrics</p>
         </div>
         <select
           value={dateRange}
           onChange={(e) => setDateRange(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+          className="px-4 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
         >
           <option value="week">Last 7 Days</option>
           <option value="month">Last 30 Days</option>
@@ -120,23 +120,23 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-5 gap-4">
           <div className="text-center">
             <div className="text-3xl font-bold text-gray-900">{analytics.bookings.total}</div>
-            <div className="text-sm text-gray-600">Total</div>
+            <div className="text-sm text-gray-800">Total</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-green-600">{analytics.bookings.confirmed}</div>
-            <div className="text-sm text-gray-600">Confirmed</div>
+            <div className="text-sm text-gray-800">Confirmed</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-yellow-600">{analytics.bookings.pending}</div>
-            <div className="text-sm text-gray-600">Pending</div>
+            <div className="text-sm text-gray-800">Pending</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-red-600">{analytics.bookings.cancelled}</div>
-            <div className="text-sm text-gray-600">Cancelled</div>
+            <div className="text-sm text-gray-800">Cancelled</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-gray-600">{analytics.bookings.noShow}</div>
-            <div className="text-sm text-gray-600">No Show</div>
+            <div className="text-3xl font-bold text-gray-800">{analytics.bookings.noShow}</div>
+            <div className="text-sm text-gray-800">No Show</div>
           </div>
         </div>
       </div>
@@ -153,11 +153,11 @@ export default function AnalyticsPage() {
                 <div key={table.tableNumber} className="flex justify-between items-center">
                   <div>
                     <span className="font-medium">Table {table.tableNumber}</span>
-                    <span className="text-sm text-gray-500 ml-2">({table.floor})</span>
+                    <span className="text-sm text-gray-700 ml-2">({table.floor})</span>
                   </div>
                   <div className="text-right">
                     <div className="font-medium">£{table.revenue}</div>
-                    <div className="text-xs text-gray-500">{table.bookingCount} bookings</div>
+                    <div className="text-xs text-gray-700">{table.bookingCount} bookings</div>
                   </div>
                 </div>
               ))}
@@ -179,7 +179,7 @@ export default function AnalyticsPage() {
                   </div>
                   <div className="text-right">
                     <div className="font-medium">£{pkg.revenue}</div>
-                    <div className="text-xs text-gray-500">{pkg.count} orders</div>
+                    <div className="text-xs text-gray-700">{pkg.count} orders</div>
                   </div>
                 </div>
               ))}
@@ -198,7 +198,7 @@ export default function AnalyticsPage() {
             {analytics.peakTimes.map((time) => (
               <div key={time.time} className="text-center">
                 <div className="text-2xl font-bold text-gray-900">{time.count}</div>
-                <div className="text-sm text-gray-600">{time.time}</div>
+                <div className="text-sm text-gray-800">{time.time}</div>
               </div>
             ))}
           </div>
@@ -218,11 +218,11 @@ export default function AnalyticsPage() {
               return (
                 <div key={index} className="flex-1 flex flex-col items-center">
                   <div 
-                    className="w-full bg-prohibition-gold rounded-t"
+                    className="w-full bg-gold rounded-t"
                     style={{ height: `${height}%` }}
                     title={`${day.date}: ${day.count} bookings`}
                   />
-                  <div className="text-xs text-gray-500 mt-1 rotate-45 origin-left">
+                  <div className="text-xs text-gray-700 mt-1 rotate-45 origin-left">
                     {new Date(day.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                   </div>
                 </div>
@@ -247,7 +247,7 @@ function StatCard({ title, value, change, positive }: StatCardProps) {
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-600">{title}</p>
+          <p className="text-sm text-gray-800">{title}</p>
           <p className="text-2xl font-bold text-gray-900">{value}</p>
         </div>
         <div className={`text-sm font-medium ${positive ? 'text-green-600' : 'text-red-600'}`}>

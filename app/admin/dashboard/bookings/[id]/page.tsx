@@ -580,7 +580,7 @@ export default function BookingDetailPage() {
                       }}
                       min={getMinDate()}
                       max={getMaxDate()}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
                     />
                   </div>
                   <div>
@@ -591,7 +591,7 @@ export default function BookingDetailPage() {
                         setEditForm({ ...editForm, bookingTime: e.target.value });
                         setAvailabilityStatus(null);
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
                     >
                       {timeSlots.map(slot => (
                         <option key={slot} value={slot}>{slot}</option>
@@ -609,7 +609,7 @@ export default function BookingDetailPage() {
                       }}
                       min="2"
                       max="12"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
                     />
                   </div>
                   <div>
@@ -620,7 +620,7 @@ export default function BookingDetailPage() {
                         setEditForm({ ...editForm, tableId: e.target.value });
                         setAvailabilityStatus(null);
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
                     >
                       {tables.map(table => (
                         <option key={table.id} value={table.id}>
@@ -683,7 +683,7 @@ export default function BookingDetailPage() {
                   <button
                     onClick={handleSaveChanges}
                     disabled={!hasChanges() || (availabilityStatus ? !availabilityStatus.available : false)}
-                    className="px-4 py-2 bg-prohibition-gold text-prohibition-dark rounded-md hover:bg-prohibition-gold/90 transition disabled:opacity-50"
+                    className="px-4 py-2 bg-gold text-speakeasy-charcoal rounded-md hover:bg-gold/90 transition disabled:opacity-50"
                   >
                     Save Changes
                   </button>
@@ -913,12 +913,12 @@ export default function BookingDetailPage() {
                 value={internalNotes}
                 onChange={(e) => setInternalNotes(e.target.value)}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
                 placeholder="Add internal notes (not visible to customer)..."
               />
               <button
                 onClick={handleNotesUpdate}
-                className="px-4 py-2 bg-prohibition-gold text-prohibition-dark rounded-md hover:bg-prohibition-gold/90 transition"
+                className="px-4 py-2 bg-gold text-speakeasy-charcoal rounded-md hover:bg-gold/90 transition"
               >
                 Save Notes
               </button>
@@ -960,7 +960,7 @@ export default function BookingDetailPage() {
                 value={editForm.modificationReason}
                 onChange={(e) => setEditForm({ ...editForm, modificationReason: e.target.value })}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-prohibition-gold focus:border-prohibition-gold"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-gold focus:border-gold"
                 placeholder="e.g., Customer requested change, Table maintenance..."
               />
             </div>
@@ -980,7 +980,7 @@ export default function BookingDetailPage() {
             <div className="flex space-x-2">
               <button
                 onClick={confirmSaveChanges}
-                className="flex-1 px-4 py-2 bg-prohibition-gold text-prohibition-dark rounded-md hover:bg-prohibition-gold/90 transition"
+                className="flex-1 px-4 py-2 bg-gold text-speakeasy-charcoal rounded-md hover:bg-gold/90 transition"
               >
                 Confirm Changes
               </button>
