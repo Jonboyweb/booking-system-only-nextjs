@@ -5,6 +5,7 @@ import { generateToken } from '@/src/lib/auth/jwt';
 import { cookies } from 'next/headers';
 import { checkRateLimit, applyRateLimitHeaders, RateLimitConfigs } from '@/lib/rate-limit';
 import { withCORS } from '@/lib/cors';
+import { getAdminTokenCookieOptions } from '@/lib/cookie-utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -77,15 +78,17 @@ export async function POST(request: NextRequest) {
     // Generate JWT token
     const token = generateToken(adminUser);
 
-    // Set cookie
+    // Set cookie with improved cross-browser compatibility
     const cookieStore = await cookies();
-    cookieStore.set('admin-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60, // 24 hours
-      path: '/'
+    const cookieOptions = getAdminTokenCookieOptions();
+
+    // Log cookie settings for debugging
+    console.log('Setting admin cookie with options:', {
+      ...cookieOptions,
+      token: token.substring(0, 20) + '...' // Log partial token for debugging
     });
+
+    cookieStore.set('admin-token', token, cookieOptions);
 
     const response = NextResponse.json({
       success: true,

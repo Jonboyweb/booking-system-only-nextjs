@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { generateToken } from '@/src/lib/auth/jwt';
 import { cookies } from 'next/headers';
 import { withCORS } from '@/lib/cors';
+import { getAdminTokenCookieOptions } from '@/lib/cookie-utils';
 import speakeasy from 'speakeasy';
 
 export async function POST(request: NextRequest) {
@@ -81,15 +82,17 @@ export async function POST(request: NextRequest) {
     // Generate JWT token
     const token = generateToken(adminUser);
 
-    // Set cookie
+    // Set cookie with improved cross-browser compatibility
     const cookieStore = await cookies();
-    cookieStore.set('admin-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60, // 24 hours
-      path: '/'
+    const cookieOptions = getAdminTokenCookieOptions();
+
+    // Log cookie settings for debugging
+    console.log('Setting admin cookie with options (2FA):', {
+      ...cookieOptions,
+      token: token.substring(0, 20) + '...' // Log partial token for debugging
     });
+
+    cookieStore.set('admin-token', token, cookieOptions);
 
     return withCORS(NextResponse.json({
       success: true,

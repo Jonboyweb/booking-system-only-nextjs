@@ -15,7 +15,7 @@ export default function AdminLoginPage() {
   const router = useRouter();
 
   const handleLogin = async () => {
-    console.log('Login attempt with:', { email });
+    console.log('Login attempt with:', { email, userAgent: navigator.userAgent });
     setError('');
     setLoading(true);
 
@@ -23,6 +23,7 @@ export default function AdminLoginPage() {
       const response = await fetch('/api/admin/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin', // Ensure cookies are sent/received
         body: JSON.stringify({ email, password })
       });
 
@@ -42,6 +43,13 @@ export default function AdminLoginPage() {
 
       // Success - use Next.js router to navigate
       console.log('Login successful, redirecting to dashboard...');
+
+      // Check if cookies are accessible (for debugging)
+      console.log('Document cookies:', document.cookie);
+
+      // Small delay to ensure cookie is set before navigation
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       router.push('/admin/dashboard');
       router.refresh(); // Refresh to ensure middleware picks up the new cookie
 
@@ -65,6 +73,7 @@ export default function AdminLoginPage() {
       const response = await fetch('/api/admin/auth/2fa/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin', // Ensure cookies are sent/received
         body: JSON.stringify({
           email,
           code: twoFactorCode,
