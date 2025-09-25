@@ -30,6 +30,7 @@ interface VenueObject {
   width: number;
   height: number;
   color?: string;
+  isTransparent?: boolean;
 }
 
 interface FloorPlanEditorProps {
@@ -348,7 +349,8 @@ export default function FloorPlanEditorWithObjects({
       positionY: 250,
       width: newObjectType === 'BAR' ? 150 : newObjectType === 'DANCE_FLOOR' ? 200 : 100,
       height: newObjectType === 'BAR' ? 60 : newObjectType === 'DANCE_FLOOR' ? 150 : 80,
-      color: formData.get('color') as string || undefined
+      color: formData.get('color') as string || undefined,
+      isTransparent: formData.get('isTransparent') === 'on'
     };
 
     await onVenueObjectAdd(newObject);
@@ -582,6 +584,10 @@ export default function FloorPlanEditorWithObjects({
             </div>
             <input name="description" type="text" placeholder="Description/Label" className="w-full px-3 py-2 border rounded" required />
             <input name="color" type="color" placeholder="Custom Color (optional)" className="px-3 py-2 border rounded" />
+            <label className="flex items-center gap-2">
+              <input name="isTransparent" type="checkbox" />
+              Transparent (show only label and icon)
+            </label>
             <div className="flex gap-2">
               <button type="submit" className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">Add</button>
               <button type="button" onClick={() => setShowAddObjectForm(false)} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
@@ -619,33 +625,56 @@ export default function FloorPlanEditorWithObjects({
           {/* Render venue objects first (behind tables) */}
           {displayedObjects.map(object => (
             <g key={object.id}>
-              <rect
-                x={object.positionX}
-                y={object.positionY}
-                width={object.width}
-                height={object.height}
-                fill={getObjectColor(object)}
-                stroke={selectedItem?.type === 'object' && selectedItem.item.id === object.id ? '#FFF' : '#666'}
-                strokeWidth={selectedItem?.type === 'object' && selectedItem.item.id === object.id ? 3 : 1}
-                opacity={object.type === 'PARTITION' ? 0.7 : 0.9}
-                className={previewMode ? '' : 'cursor-move hover:stroke-2'}
-                onMouseDown={(e) => handleMouseDown(e, object, 'object')}
-                onClick={() => !draggedItem && !resizingItem && setSelectedItem({ type: 'object', item: object })}
-              />
+              {/* Render background rect only if not transparent */}
+              {!object.isTransparent && (
+                <rect
+                  x={object.positionX}
+                  y={object.positionY}
+                  width={object.width}
+                  height={object.height}
+                  fill={getObjectColor(object)}
+                  stroke={selectedItem?.type === 'object' && selectedItem.item.id === object.id ? '#FFF' : '#666'}
+                  strokeWidth={selectedItem?.type === 'object' && selectedItem.item.id === object.id ? 3 : 1}
+                  opacity={object.type === 'PARTITION' ? 0.7 : 0.9}
+                  className={previewMode ? '' : 'cursor-move hover:stroke-2'}
+                  onMouseDown={(e) => handleMouseDown(e, object, 'object')}
+                  onClick={() => !draggedItem && !resizingItem && setSelectedItem({ type: 'object', item: object })}
+                />
+              )}
 
-              {/* Object label */}
+              {/* Invisible hitbox for transparent objects */}
+              {object.isTransparent && (
+                <rect
+                  x={object.positionX}
+                  y={object.positionY}
+                  width={object.width}
+                  height={object.height}
+                  fill="transparent"
+                  stroke={selectedItem?.type === 'object' && selectedItem.item.id === object.id ? '#D4AF37' : 'transparent'}
+                  strokeWidth={selectedItem?.type === 'object' && selectedItem.item.id === object.id ? 2 : 0}
+                  strokeDasharray={selectedItem?.type === 'object' && selectedItem.item.id === object.id ? '5,5' : '0'}
+                  className={previewMode ? '' : 'cursor-move'}
+                  onMouseDown={(e) => handleMouseDown(e, object, 'object')}
+                  onClick={() => !draggedItem && !resizingItem && setSelectedItem({ type: 'object', item: object })}
+                />
+              )}
+
+              {/* Object label - always visible */}
               <text
                 x={object.positionX + object.width / 2}
                 y={object.positionY + object.height / 2}
                 textAnchor="middle"
-                fill="#F5F5DC"
+                fill={object.isTransparent ? '#D4AF37' : '#F5F5DC'}
                 className="font-poiret text-sm pointer-events-none select-none"
+                style={{
+                  textShadow: object.isTransparent ? '1px 1px 2px rgba(0,0,0,0.8)' : 'none'
+                }}
               >
                 {object.description}
               </text>
 
               {/* Type indicator for custom objects */}
-              {object.type === 'CUSTOM' && (
+              {object.type === 'CUSTOM' && !object.isTransparent && (
                 <text
                   x={object.positionX + object.width / 2}
                   y={object.positionY + object.height / 2 + 15}
@@ -655,6 +684,100 @@ export default function FloorPlanEditorWithObjects({
                 >
                   {object.type}
                 </text>
+              )}
+
+              {/* Icon for transparent objects */}
+              {object.isTransparent && (
+                <>
+                  {object.type === 'BAR' && (
+                    <text
+                      x={object.positionX + object.width / 2}
+                      y={object.positionY + object.height / 2 + 20}
+                      textAnchor="middle"
+                      fill="#D4AF37"
+                      className="text-lg pointer-events-none"
+                    >
+                      🍸
+                    </text>
+                  )}
+                  {object.type === 'DJ_BOOTH' && (
+                    <text
+                      x={object.positionX + object.width / 2}
+                      y={object.positionY + object.height / 2 + 20}
+                      textAnchor="middle"
+                      fill="#D4AF37"
+                      className="text-lg pointer-events-none"
+                    >
+                      🎵
+                    </text>
+                  )}
+                  {object.type === 'DANCE_FLOOR' && (
+                    <text
+                      x={object.positionX + object.width / 2}
+                      y={object.positionY + object.height / 2 + 20}
+                      textAnchor="middle"
+                      fill="#D4AF37"
+                      className="text-lg pointer-events-none"
+                    >
+                      💃
+                    </text>
+                  )}
+                  {object.type === 'EXIT' && (
+                    <text
+                      x={object.positionX + object.width / 2}
+                      y={object.positionY + object.height / 2 + 20}
+                      textAnchor="middle"
+                      fill="#4CAF50"
+                      className="text-lg pointer-events-none"
+                    >
+                      ➤
+                    </text>
+                  )}
+                  {object.type === 'STAIRCASE' && (
+                    <text
+                      x={object.positionX + object.width / 2}
+                      y={object.positionY + object.height / 2 + 20}
+                      textAnchor="middle"
+                      fill="#D4AF37"
+                      className="text-lg pointer-events-none"
+                    >
+                      ⬆
+                    </text>
+                  )}
+                  {object.type === 'TOILETS' && (
+                    <text
+                      x={object.positionX + object.width / 2}
+                      y={object.positionY + object.height / 2 + 20}
+                      textAnchor="middle"
+                      fill="#90CAF9"
+                      className="text-lg pointer-events-none"
+                    >
+                      🚻
+                    </text>
+                  )}
+                  {object.type === 'PARTITION' && (
+                    <text
+                      x={object.positionX + object.width / 2}
+                      y={object.positionY + object.height / 2 + 20}
+                      textAnchor="middle"
+                      fill="#D4AF37"
+                      className="text-lg pointer-events-none"
+                    >
+                      ═
+                    </text>
+                  )}
+                  {object.type === 'CUSTOM' && (
+                    <text
+                      x={object.positionX + object.width / 2}
+                      y={object.positionY + object.height / 2 + 20}
+                      textAnchor="middle"
+                      fill="#D4AF37"
+                      className="text-lg pointer-events-none"
+                    >
+                      ★
+                    </text>
+                  )}
+                </>
               )}
 
               {/* Resize handles */}
@@ -999,6 +1122,16 @@ export default function FloorPlanEditorWithObjects({
                   onChange={(e) => setEditingObject({...editingObject, color: e.target.value})}
                   className="w-full px-3 py-1 border rounded h-10"
                 />
+              </div>
+              <div>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={editingObject.isTransparent || false}
+                    onChange={(e) => setEditingObject({...editingObject, isTransparent: e.target.checked})}
+                  />
+                  <span className="text-sm">Transparent (show only label and icon)</span>
+                </label>
               </div>
               <div className="flex gap-2">
                 <button

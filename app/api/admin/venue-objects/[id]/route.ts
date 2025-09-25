@@ -53,7 +53,8 @@ export async function PATCH(
         positionY: body.positionY,
         width: body.width,
         height: body.height,
-        color: body.color
+        color: body.color,
+        isTransparent: body.isTransparent
       }
     });
 

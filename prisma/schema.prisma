@@ -247,17 +247,18 @@ model TableBlock {
 }
 
 model VenueObject {
-  id          String           @id @default(uuid())
-  type        VenueObjectType
-  description String
-  floor       Floor
-  positionX   Int              @default(50)
-  positionY   Int              @default(50)
-  width       Int              @default(100)
-  height      Int              @default(80)
-  color       String?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id           String           @id @default(uuid())
+  type         VenueObjectType
+  description  String
+  floor        Floor
+  positionX    Int              @default(50)
+  positionY    Int              @default(50)
+  width        Int              @default(100)
+  height       Int              @default(80)
+  color        String?
+  isTransparent Boolean         @default(false)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   @@index([floor])
   @@map("venue_objects")

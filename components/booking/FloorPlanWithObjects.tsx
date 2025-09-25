@@ -13,6 +13,7 @@ interface VenueObject {
   width: number;
   height: number;
   color?: string;
+  isTransparent?: boolean;
 }
 
 interface FloorPlanProps {
@@ -174,23 +175,26 @@ export default function FloorPlanWithObjects({
         {/* Render venue objects first (behind tables) */}
         {floorObjects.map(object => (
           <g key={object.id}>
-            <rect
-              x={object.positionX}
-              y={object.positionY}
-              width={object.width}
-              height={object.height}
-              fill={object.type === 'DANCE_FLOOR' ? 'url(#danceFloor)' : getObjectColor(object)}
-              stroke="#333"
-              strokeWidth="1"
-              opacity={object.type === 'PARTITION' ? 0.5 : 0.8}
-            />
+            {/* Only render background if not transparent */}
+            {!object.isTransparent && (
+              <rect
+                x={object.positionX}
+                y={object.positionY}
+                width={object.width}
+                height={object.height}
+                fill={object.type === 'DANCE_FLOOR' ? 'url(#danceFloor)' : getObjectColor(object)}
+                stroke="#333"
+                strokeWidth="1"
+                opacity={object.type === 'PARTITION' ? 0.5 : 0.8}
+              />
+            )}
 
-            {/* Object label */}
+            {/* Object label - always visible */}
             <text
               x={object.positionX + object.width / 2}
               y={object.positionY + object.height / 2}
               textAnchor="middle"
-              fill="#F5F5DC"
+              fill={object.isTransparent ? '#D4AF37' : '#F5F5DC'}
               className="font-poiret text-sm pointer-events-none select-none"
               style={{
                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
@@ -200,8 +204,8 @@ export default function FloorPlanWithObjects({
               {object.description}
             </text>
 
-            {/* Special icons/indicators for certain types */}
-            {object.type === 'EXIT' && (
+            {/* Special icons/indicators for certain types - enhanced for transparent objects */}
+            {((object.type === 'EXIT' && !object.isTransparent) || (object.type === 'EXIT' && object.isTransparent)) && (
               <text
                 x={object.positionX + object.width / 2}
                 y={object.positionY + object.height / 2 + 15}
@@ -209,11 +213,11 @@ export default function FloorPlanWithObjects({
                 fill="#4CAF50"
                 className="text-xs pointer-events-none select-none"
               >
-                ↑ EXIT
+                {object.isTransparent ? '➤ EXIT' : '↑ EXIT'}
               </text>
             )}
 
-            {object.type === 'TOILETS' && (
+            {((object.type === 'TOILETS' && !object.isTransparent) || (object.type === 'TOILETS' && object.isTransparent)) && (
               <text
                 x={object.positionX + object.width / 2}
                 y={object.positionY + object.height / 2 + 15}
@@ -225,7 +229,7 @@ export default function FloorPlanWithObjects({
               </text>
             )}
 
-            {object.type === 'DJ_BOOTH' && (
+            {((object.type === 'DJ_BOOTH' && !object.isTransparent) || (object.type === 'DJ_BOOTH' && object.isTransparent)) && (
               <text
                 x={object.positionX + object.width / 2}
                 y={object.positionY + object.height / 2 + 15}
@@ -233,8 +237,69 @@ export default function FloorPlanWithObjects({
                 fill="#D4AF37"
                 className="text-xs pointer-events-none select-none"
               >
-                ♫
+                {object.isTransparent ? '🎵' : '♫'}
               </text>
+            )}
+
+            {/* Additional icons for transparent objects only */}
+            {object.isTransparent && (
+              <>
+                {object.type === 'BAR' && (
+                  <text
+                    x={object.positionX + object.width / 2}
+                    y={object.positionY + object.height / 2 + 15}
+                    textAnchor="middle"
+                    fill="#D4AF37"
+                    className="text-xs pointer-events-none select-none"
+                  >
+                    🍸
+                  </text>
+                )}
+                {object.type === 'DANCE_FLOOR' && (
+                  <text
+                    x={object.positionX + object.width / 2}
+                    y={object.positionY + object.height / 2 + 15}
+                    textAnchor="middle"
+                    fill="#D4AF37"
+                    className="text-xs pointer-events-none select-none"
+                  >
+                    💃
+                  </text>
+                )}
+                {object.type === 'STAIRCASE' && (
+                  <text
+                    x={object.positionX + object.width / 2}
+                    y={object.positionY + object.height / 2 + 15}
+                    textAnchor="middle"
+                    fill="#D4AF37"
+                    className="text-xs pointer-events-none select-none"
+                  >
+                    ⬆
+                  </text>
+                )}
+                {object.type === 'PARTITION' && (
+                  <text
+                    x={object.positionX + object.width / 2}
+                    y={object.positionY + object.height / 2 + 15}
+                    textAnchor="middle"
+                    fill="#D4AF37"
+                    className="text-xs pointer-events-none select-none"
+                  >
+                    ═
+                  </text>
+                )}
+                {object.type === 'CUSTOM' && (
+                  <text
+                    x={object.positionX + object.width / 2}
+                    y={object.positionY + object.height / 2 + 15}
+                    textAnchor="middle"
+                    fill="#D4AF37"
+                    className="text-xs pointer-events-none select-none"
+                  >
+                    ★
+                  </text>
+                )}
+              </>
             )}
           </g>
         ))}

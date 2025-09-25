@@ -68,7 +68,8 @@ export async function POST(request: NextRequest) {
         positionY: body.positionY ?? 200,
         width: body.width ?? 100,
         height: body.height ?? 80,
-        color: body.color
+        color: body.color,
+        isTransparent: body.isTransparent ?? false
       }
     });
 
@@ -107,7 +108,8 @@ export async function PUT(request: NextRequest) {
             positionY: obj.positionY,
             width: obj.width,
             height: obj.height,
-            color: obj.color
+            color: obj.color,
+            isTransparent: obj.isTransparent ?? false
           }
         })
       )

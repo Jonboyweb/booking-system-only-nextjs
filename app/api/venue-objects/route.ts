@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
         positionY: true,
         width: true,
         height: true,
-        color: true
+        color: true,
+        isTransparent: true
       },
       orderBy: [
         { floor: 'asc' },
